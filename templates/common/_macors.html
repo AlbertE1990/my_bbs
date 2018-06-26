@@ -1,0 +1,13 @@
+{% macro static(filename) -%}
+    {{ url_for('static',filename=filename) }}
+{%- endmacro %}
+{% macro bootstrap_plugin() %}
+    <link href="{{ static('common/css/bootstrap.css') }}" rel="stylesheet" media="screen">
+    <script src="{{ static('common/js/jquery.js') }}"></script>
+    <script src="{{ static('common/js/bootstrap.min.js') }}"></script>
+{% endmacro %}
+{% macro sweetalert_plugin() %}
+    <script src="{{ static('common/js/sweetalert.min.js') }}"></script>
+    <script src="{{ static('common/js/xtalert.js') }}"></script>
+    <link rel="stylesheet" href="{{ static('common/css/sweetalert.css') }}">
+{% endmacro %}

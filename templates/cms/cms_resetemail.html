@@ -1,0 +1,83 @@
+{% from "common/_macors.html" import static,bootstrap_plugin %}
+{% set user = g.user %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Title</title>
+  {{ bootstrap_plugin() }}
+
+  <link href={{ static('cms/css/thin-admin.css') }} rel="stylesheet" media="screen">
+  <link href={{ static('cms/css/font-awesome.css') }} rel="stylesheet" media="screen">
+  <link href={{ static('cms/style/style.css') }} rel="stylesheet" media="screen">
+  <link href={{ static('cms/style/nestable.css') }} rel="stylesheet" media="screen">
+  <script src={{ static('cms/js/iframe.js') }}></script>
+  <link rel="stylesheet" href={{ static('cms/css/iframe.css') }}>
+
+  <link href="{{ static('cms/css/font-awesome.css') }}" rel="stylesheet" media="screen">
+  <link href="{{ static('cms/style/style.css') }}" rel="stylesheet">
+  {#  <link href="{{ static('cms/css/thin-admin.css') }}" rel="stylesheet" media="screen">#}
+</head>
+<body>
+
+<div class="content container" >
+
+  <div class="col-lg-6">
+          <div class="widget">
+            <div class="widget-header"> <i class="icon-align-left"></i>
+              <h3>修改邮箱 </h3>
+            </div>
+            <div class="widget-content">
+              <form method="post" class="form-horizontal">
+                <fieldset>
+                  <div class="control-group">
+                    <div class="col-md-3">
+                      <label class="control-label" for="email"> 新邮箱 </label>
+                    </div>
+                    <div class="col-md-9">
+                      <div class="form-group">
+                        <input type="email" id="email" name="email" class="form-control" data-trigger="change" data-validation-minlength="1" required="required">
+
+                      </div>
+                    </div>
+                  </div>
+                  <div class="control-group">
+                  <div class="col-md-3">
+                    <label for="password-field" class="control-label">原始密码</label>
+                    </div>
+                    <div class="col-md-9">
+                    <div class="form-group">
+                      <div class="input-group"> <span class="input-group-addon"><i class="icon-lock"></i></span>
+                        <input type="password" placeholder="请输入原始密码" id="raw_password-field" class="form-control">
+                      </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="control-group">
+                  <div class="col-md-3">
+                    <label for="normal-field" class="control-label">验证码</label>
+                    </div>
+                    <div class="col-md-9">
+                    <div class="form-group">
+                      <input type="text" placeholder="请输入验证码" class="form-control" id="normal-field">
+                    </div>
+                    </div>
+                  </div>
+
+
+
+
+                </fieldset>
+                <div class="form-actions">
+                  <div>
+                    <button class="btn btn-primary" type="submit">更改邮箱</button>
+                    <button class="btn btn-default" type="button">取消</button>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+</div>
+</body>
+</html>

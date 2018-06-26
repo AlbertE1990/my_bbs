@@ -1,0 +1,43 @@
+
+    <div class="row">
+        <div class="col-lg-12">
+            <h2 class="page-title">个人信息 </h2>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <table class="table table-bordered table-hover">
+                <tr>
+                    <td>用户名</td>
+                    <td>{{ user.username }}</td>
+                </tr>
+                <tr>
+                    <td>邮箱</td>
+                    <td>{{ user.email }}</td>
+                </tr>
+                <tr>
+                    <td>角色</td>
+                    <td>
+                        {% for role in user.roles %}
+                            {{ role.name }}
+                            {% if not loop.last %},{% endif %}
+                        {% endfor %}
+                    </td>
+                </tr>
+                <tr>
+                    <td>权限</td>
+                    <td>
+                        {% for role in user.roles %}
+                            {{ role.desc }}
+                            {% if not loop.last %}/{% endif %}
+                        {% endfor %}
+                    </td>
+                </tr>
+                <tr>
+                    <td>加入时间</td>
+                    <td>{{ user.join_time }}</td>
+                </tr>
+            </table>
+
+        </div>
+    </div>
