@@ -21,16 +21,12 @@
 <body>
 
 <div class="content container" >
+
   <div class="row">
-    <div class="col-md-12">
-      <h2 class="page-title">User Profile Demo<small> Out of the box form</small></h2>
-    </div>
-  </div>
-  <div class="row">
-    <div class="col-md-8">
+    <div class="col-sm-8">
       <div class="widget">
         <div class="widget-header"> <i class="icon-user"></i>
-          <h3>User Profile</h3>
+          <h3>个人信息</h3>
         </div>
         <div class="widget-content">
           <div class="body">
@@ -40,55 +36,53 @@
                   <div class="text-align-center"> <img style="height: 112px;" alt="64x64" src={{ static('cms/images/user.jpg') }} class="img-circle"> </div>
                 </div>
                 <div class="col-md-8">
-                  <h3 class="no-margin" id="username">User name</h3>
+                  <h3 class="no-margin" id="username">{{user.username}}</h3>
                   <address>
-                    <strong>Development manager</strong><br>
-                    <abbr title="Work email">e-mail:</abbr> <a href="mailto:#">ramanip@riaxe.com</a><br>
-                    <abbr title="Work Phone">phone:</abbr> (123) 456-7890
+                    <strong>角色：</strong><br>
+                    <abbr title="Work email">邮箱：</abbr> <a href="mailto:#">{{user.email}}</a><br>
+                    <abbr title="Work Phone">电话号码:</abbr> {{ None |default('还未添加电话号码')}}
                   </address>
                 </div>
               </div>
-              <fieldset>
-                <legend>Account Edit Form <small>Some explanation text</small></legend>
-              </fieldset>
+
               <fieldset>
                 <legend class="section">个人信息</legend>
         <div class="control-group">
-          <div class="col-md-3">
-            <label class="control-label">Gender</label>
+          <div class="col-sm-3">
+            <label class="control-label">性别</label>
           </div>
-          <div class="col-md-9">
+          <div class="col-sm-9">
             <div class="form-group">
               <div data-toggle="buttons" class="btn-group" id="gender">
                 <label data-toggle-passive-class="btn-default" data-toggle-class="btn-primary" class="btn btn-primary active">
                   <input type="radio" value="male" name="gender">
-                  &nbsp; Male &nbsp; </label>
+                  男 </label>
                 <label data-toggle-passive-class="btn-default" data-toggle-class="btn-primary" class="btn btn-default">
                   <input type="radio" value="female" name="gender">
-                  Female </label>
+                  女 </label>
               </div>
             </div>
           </div>
         </div>
         <div class="control-group">
-          <div class="col-md-3">
-            <label class="control-label" for="date-of-birth">Date Of Birth <span class="required">*</span></label>
+          <div class="col-sm-3">
+            <label class="control-label" for="date-of-birth">生日</label>
           </div>
-          <div class="col-md-9">
+          <div class="col-sm-9">
             <div class="form-group">
-              <input type="text" value="" name="date-of-birth" required class="col-sm-6 col-xs-12 date-picker parsley-validated" id="date-of-birth">
+              <input type="text" value="" name="date-of-birth"  class=" date-picker parsley-validated col-sm-6" id="date-of-birth">
             </div>
           </div>
         </div>
         <div class="control-group">
-            <div class="col-md-3">
-              <label class="control-label" for="phone">Phone <span class="required">*</span></label>
+            <div class="col-sm-3">
+              <label class="control-label" for="phone">电话号码 <span class="required">*</span></label>
             </div>
-            <div class="col-md-9">
+            <div class="col-sm-9">
               <div class="form-group">
 
 
-                <input type="text" maxlength="28" name="phone" required class="form-control  mask parsley-validated col-sm-6" id="phone">
+                <input type="text"  name="phone" required class=" mask parsley-validated col-sm-6" id="phone"data-inputmask="'mask':'+33 999 999 999'">
 
 
             </div>
@@ -106,5 +100,7 @@
 </div>
 </div>
 </div>
+<script type='text/javascript' src={{static('cms/assets/plugins/form-inputmask/jquery.inputmask.min.js')}}></script>
+
 </body>
 </html>

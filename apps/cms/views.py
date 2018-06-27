@@ -1,7 +1,7 @@
 # -*- coding:utf-8 -*-
-from flask import Blueprint,render_template,request,session,redirect,url_for
+from flask import Blueprint,render_template,request,session,redirect,url_for,g
 from flask.views import MethodView
-from .forms import LoginForm
+from .forms import LoginForm,ResetPasswordForm
 from .modles import CMSUser
 from utils import restful
 from config import CMS_USER_ID
@@ -22,6 +22,7 @@ def index():
     return render_template('cms/cms_index.html')
 
 
+#登陆
 class LoginView(MethodView):
 
     def get(self):
@@ -43,7 +44,7 @@ class LoginView(MethodView):
         else:
             return restful.params_error(message= '邮箱或者密码格式错误！')
 
-
+#注销
 @bp.route('/logout')
 @login_required
 def logout():
@@ -57,12 +58,29 @@ def profile():
 
     return render_template('cms/cms_profile.html')
 
+#修改密码
+class ResetPasswordView(MethodView):
 
-@bp.route('/resetpwd')
-@login_required
-def reset_pwd():
+    decorators = [login_required]
 
-    return render_template('cms/cms_resetpwd.html')
+    def get(self):
+        return render_template('cms/cms_resetpwd.html')
+
+    def post(self):
+        form = ResetPasswordForm(request.form)
+        if form.validate():
+            raw_pwd = form.raw_pwd.data
+            new_pwd = form.new_pwd1.data
+            if g.user.check_password(raw_pwd):
+                g.user.password = new_pwd
+                return restful.success('密码修改成功！')
+            else:
+                return restful.params_error('原始密码错误！')
+        else:
+            return restful.params_error('原始密码错误!')
+
+bp.add_url_rule('/resetpwd',view_func=ResetPasswordView.as_view('resetpwd'))
+
 
 
 @bp.route('/resetemail')

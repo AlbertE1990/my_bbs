@@ -22,7 +22,7 @@
 
 <div class="content container" >
 
-  <div class="col-lg-6">
+  <div class="col-sm-8">
           <div class="widget">
             <div class="widget-header"> <i class="icon-align-left"></i>
               <h3>修改邮箱 </h3>
@@ -30,41 +30,34 @@
             <div class="widget-content">
               <form method="post" class="form-horizontal">
                 <fieldset>
-                  <div class="control-group">
-                    <div class="col-md-3">
-                      <label class="control-label" for="email"> 新邮箱 </label>
-                    </div>
-                    <div class="col-md-9">
-                      <div class="form-group">
-                        <input type="email" id="email" name="email" class="form-control" data-trigger="change" data-validation-minlength="1" required="required">
-
-                      </div>
-                    </div>
+                <div class="form-group has-success lable-padd">
+                  <label for="raw-pwd" class="col-sm-3">密码：</label>
+                  <div class="col-sm-6">
+                    <input type="password" name="raw-pwd" id="raw-pwd" class="form-control">
                   </div>
-                  <div class="control-group">
-                  <div class="col-md-3">
-                    <label for="password-field" class="control-label">原始密码</label>
-                    </div>
-                    <div class="col-md-9">
-                    <div class="form-group">
-                      <div class="input-group"> <span class="input-group-addon"><i class="icon-lock"></i></span>
-                        <input type="password" placeholder="请输入原始密码" id="raw_password-field" class="form-control">
-                      </div>
-                      </div>
-                    </div>
+                  <div class="col-sm-3">
+                    <p class="help-block"><i class="icon-ok"></i> Great success!</p>
                   </div>
-                  <div class="control-group">
-                  <div class="col-md-3">
-                    <label for="normal-field" class="control-label">验证码</label>
-                    </div>
-                    <div class="col-md-9">
-                    <div class="form-group">
-                      <input type="text" placeholder="请输入验证码" class="form-control" id="normal-field">
-                    </div>
-                    </div>
+                </div>
+                <div class="form-group has-warning lable-padd">
+                  <label for="new-email" class=" col-sm-3">新邮箱：</label>
+                  <div class="col-sm-6">
+                    <input type="email" name="new-email" id="new-email" class="form-control">
                   </div>
+                  <div class="col-sm-3">
+                    <p class="help-block"><i class="icon-warning-sign"></i> Be careful!</p>
+                  </div>
+                </div>
 
-
+                <div class="form-group has-error lable-padd">
+                  <label for="email-captcha" class="col-sm-3">重复原始密码：</label>
+                  <div class="col-sm-6">
+                    <input type="password" name="email-captcha" id="email-captcha" class="form-control">
+                  </div>
+                  <div class="col-sm-3">
+                    <p class="help-block"><i class="icon-exclamation-sign"></i> Oops!</p>
+                  </div>
+                </div>
 
 
                 </fieldset>
