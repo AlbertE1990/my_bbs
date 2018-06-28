@@ -35,5 +35,25 @@ class CMSUser(db.Model):
 
     __str__ = __repr__
 
+
+class CMSUserDetail(db.Model):
+    __tablename__ = 'cms_user_detail'
+    id = db.Column(db.Integer, primary_key=True,autoincrement=True)
+    uid = db.Column(db.String(50),db.ForeignKey('cms_user.id'))
+    name = db.Column(db.String(50))
+    phone = db.Column(db.String(20))
+    birthday = db.Column(db.Date,nullable=True)
+    gender = db.Column(db.Integer,nullable=True)
+    intro= db.Column(db.Text,nullable=True)
+    avatar = db.Column(db.String(255),nullable=True)
+
+    user= db.relationship('CMSUser',backref=db.backref('detail',uselist=False),uselist=False)
+
+    def __repr__(self):
+        return '<CMSUser CMSUserDetail:%s>'%self.name
+
+    __str__ = __repr__
+
+
 if __name__ == '__main__':
     pass

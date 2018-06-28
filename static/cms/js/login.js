@@ -34,4 +34,14 @@ $(function () {
 
     });
 
+    //iframe注销带动主页面注销
+  if (window.location.pathname == '/cms/login/'){
+    if (parent.window != window){
+      parent.window.location.href = (location.protocol+'//'+location.host + '/cms/login/');
+    }
+
+  }else{
+    console.log('mei zhu xiao')
+  };
+
 });

@@ -1,11 +1,12 @@
 # -*- coding:utf-8 -*-
 from flask import Blueprint,render_template,request,session,redirect,url_for,g
 from flask.views import MethodView
-from .forms import LoginForm,ResetPasswordForm
-from .modles import CMSUser
+from .forms import LoginForm,ResetPasswordForm,ProfileForm
+from .modles import CMSUser,CMSUserDetail
 from utils import restful
 from config import CMS_USER_ID
 from .decorators import login_required
+from exts import db
 import os
 
 bp = Blueprint('cms',__name__,url_prefix='/cms')
@@ -18,9 +19,7 @@ base_path = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 @bp.route('/')
 @login_required
 def index():
-
     return render_template('cms/cms_index.html')
-
 
 #登陆
 class LoginView(MethodView):
@@ -52,11 +51,40 @@ def logout():
     return redirect(url_for('cms.login'))
 
 
-@bp.route('/profile')
-@login_required
-def profile():
+#个人信息
+class ProfileView(MethodView):
+    decorators = [login_required]
 
-    return render_template('cms/cms_profile.html')
+    def get(self):
+        ud = g.user.detail
+        print(str(ud.birthday))
+        print('avatar',ud.avatar)
+
+        return render_template('cms/cms_profile.html')
+
+    def post(self):
+        print(request.form)
+        form = ProfileForm(request.form)
+        print(form)
+        if form.validate():
+            data={}
+            data['uid'] = g.user.id
+            data['name'] = form.name.data
+            data['phone'] = form.phone.data
+            data['birthday'] = form.birthday.data
+            data['gender'] = form.gender.data
+            data['intro'] = form.intro.data
+            data['avatar'] = form.avatar.data
+            detail = CMSUserDetail(**data)
+            db.session.add(detail)
+            db.session.commit()
+            return restful.success('信息保存成功！')
+        else:
+            print(form.errors)
+            return restful.params_error('信息保存失败！')
+
+bp.add_url_rule('/profile', view_func=ProfileView.as_view('profile'))
+
 
 #修改密码
 class ResetPasswordView(MethodView):
@@ -78,9 +106,7 @@ class ResetPasswordView(MethodView):
                 return restful.params_error('原始密码错误！')
         else:
             return restful.params_error('原始密码错误!')
-
 bp.add_url_rule('/resetpwd',view_func=ResetPasswordView.as_view('resetpwd'))
-
 
 
 @bp.route('/resetemail')
@@ -88,23 +114,6 @@ bp.add_url_rule('/resetpwd',view_func=ResetPasswordView.as_view('resetpwd'))
 def reset_email():
 
     return render_template('cms/cms_resetemail.html')
-
-
-@bp.route('/profile_ajax')
-@login_required
-def profile_ajax():
-    file = os.path.join(base_path, 'templates/cms/cms_profile_ajax.html')
-    with open(file,'r',encoding='utf-8') as f:
-        profile_ajax_doc = f.read()
-    return profile_ajax_doc
-
-
-@bp.route('/profile_iframe')
-@login_required
-def profile_iframe():
-    data = 'this is profile'
-    return data
-
 
 
 bp.add_url_rule('/login/',endpoint='login',view_func=LoginView.as_view('login'))

@@ -2,17 +2,19 @@ $(function () {
 
   //初始化iframe的高度
   var iframe_body_heigth = $(document).height();
-  console.log('iframe_body_heigth:',iframe_body_heigth);
   parent.$('iframe').height(iframe_body_heigth);
 
 
-  //修改密码
+  //修改密码开始
+   var raw_pwdE = $('#raw-pwd');
+   var new_pwd1E = $('#new-pwd1');
+   var new_pwd2E = $('#new-pwd2');
 
-  //密码验证
+   //密码验证
   function validate_pwd() {
-    var raw_pwd = $('#raw-pwd').val();
-    var new_pwd1 = $('#new-pwd1').val();
-    var new_pwd2 = $('#new-pwd2').val();
+    var raw_pwd = raw_pwdE.val();
+    var new_pwd1 = new_pwd1E.val();
+    var new_pwd2 = new_pwd2E.val();
     if (new_pwd1 != new_pwd2) {
 
       $('fieldset > div:nth-child(3)').addClass('has-error');
@@ -31,15 +33,20 @@ $(function () {
       return true
     }
   }
-    ;
+
+  //清空密码输入框
+   function clear_pwd(){
+     raw_pwdE.val('');
+     new_pwd1E.val('');
+     new_pwd2E.val('');
+   }
 
   //点击submit
-    var submitE = $('#reset-pwd');
-    submitE.click(function (e) {
+    $('#reset-pwd').click(function (e) {
       e.preventDefault();
-      var raw_pwd = $('#raw-pwd').val();
-      var new_pwd1 = $('#new-pwd1').val();
-      var new_pwd2 = $('#new-pwd2').val();
+      var raw_pwd = raw_pwdE.val();
+      var new_pwd1 = new_pwd1E.val();
+      var new_pwd2 = new_pwd2E.val();
       if(validate_pwd()) {
         myajax.post({
           'url': '/cms/resetpwd',
@@ -50,16 +57,65 @@ $(function () {
           },
           'success': function (data) {
             if (data.code == 200) {
-              console.log('密码修改成功！')
+              xtalert.alertSuccessToast(data.message)
+              clear_pwd()
             } else {
-              console.log(data.message)
+              xtalert.alertErrorToast(data.message)
+               clear_pwd()
             }
           }
         })
-      };
+      }
 
 
     });
+
+    //点击取消
+    $('#cancel-pwd').click(function(){
+      clear_pwd()
+     });
+
+    //修改密码结束
+
+  $('#cancel').click(function(){
+    $(this).parents('form').find('input').val('');
+  });
+  //添加个人详情
+
+  $('#sumbit-profile').click(function(e){
+    e.preventDefault();
+    var gender = $('#gender').find('input[name="gender"]:checked').val();
+    var birth = $('#date-of-birth').val();
+    var phone = $('#phone').val();
+    var intro = $('#description').val();
+    var name = $('#name').val();
+
+    myajax.post({
+      'url':'/cms/profile',
+      'data':{
+        'name':name,
+        'gender':gender,
+        'birthday':birth,
+        'phone':phone,
+        'intro':intro
+      },
+      'success':function(data){
+        if(data.code == 200){
+          xtalert.alertSuccessToast(data.message);
+
+
+        }else{
+          xtalert.alertSuccessToast(data.message)
+         }
+      }
+    })
+
+
+  });
+
+
+
+
 });
 
 
