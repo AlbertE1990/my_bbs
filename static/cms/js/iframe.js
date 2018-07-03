@@ -4,6 +4,10 @@ $(function () {
   var iframe_body_heigth = $(document).height();
   parent.$('iframe').height(iframe_body_heigth);
 
+  //点击取消按钮执行函数
+  function reset() {
+    $('#cancel').parents('form').find('input').val('');
+  };
 
   //修改密码开始
    var raw_pwdE = $('#raw-pwd');
@@ -32,18 +36,19 @@ $(function () {
       $('fieldset > div:nth-child(3)').removeClass('has-error');
       return true
     }
-  }
+  };
 
   //清空密码输入框
-   function clear_pwd(){
+   function clear_pwd() {
      raw_pwdE.val('');
      new_pwd1E.val('');
      new_pwd2E.val('');
-   }
+   };
 
-  //点击submit
+  //更改密码点击submit
     $('#reset-pwd').click(function (e) {
       e.preventDefault();
+      console.log('点击了');
       var raw_pwd = raw_pwdE.val();
       var new_pwd1 = new_pwd1E.val();
       var new_pwd2 = new_pwd2E.val();
@@ -57,11 +62,11 @@ $(function () {
           },
           'success': function (data) {
             if (data.code == 200) {
-              xtalert.alertSuccessToast(data.message)
-              clear_pwd()
+              parent.xtalert.alertSuccessToast(data.message);
+              reset();
             } else {
-              xtalert.alertErrorToast(data.message)
-               clear_pwd()
+              parent.xtalert.alertErrorToast(data.message);
+              reset();
             }
           }
         })
@@ -71,17 +76,16 @@ $(function () {
     });
 
     //点击取消
-    $('#cancel-pwd').click(function(){
-      clear_pwd()
+    $('#cancel').click(function(){
+      reset();
+
      });
 
     //修改密码结束
 
-  $('#cancel').click(function(){
-    $(this).parents('form').find('input').val('');
-  });
-  //添加个人详情
 
+  //添加个人详情
+  //点击submit
   $('#sumbit-profile').click(function(e){
     e.preventDefault();
     var gender = $('#gender').find('input[name="gender"]:checked').val();
@@ -101,15 +105,44 @@ $(function () {
       },
       'success':function(data){
         if(data.code == 200){
-          xtalert.alertSuccessToast(data.message);
+          parent.xtalert.alertSuccessToast(data.message);
 
 
         }else{
-          xtalert.alertSuccessToast(data.message)
+          parent.xtalert.alertSuccessToast(data.message)
          }
       }
     })
 
+  });
+
+
+  //修改邮箱
+  $('#reset-email').click(function (e) {
+    e.preventDefault();
+    var raw_pwd = $('#raw-pwd').val();
+    var new_email = $('#new-email').val();
+    var captcha = $('#email-captcha').val();
+    myajax.post({
+      'url':'/cms/resetemail',
+      'data':{
+        'pwd':raw_pwd,
+        'email':new_email,
+        'captcha':captcha
+      },
+      'success':function (data) {
+        if (data.code == 200){
+          parent.xtalert.alertSuccessToast(data.message)
+        }else{
+          parent.xtalert.alertErrorToast(data.message)
+        };
+      }
+    })
+
+  });
+
+  //点击获取验证码
+  $('#captcha-btn').click(function (e) {
 
   });
 

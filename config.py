@@ -20,3 +20,12 @@ CMS_USER_ID = "you can not guess it"
 #设置cookies过期时间,2小时
 PERMANENT_SESSION_LIFETIME = timedelta(hours=2)
 
+#mail
+MAIL_SERVER = "smtp.qq.com"
+MAIL_PORT = '587'
+MAIL_USE_TLS = True
+#MAIL_USE_SSL = True
+MAIL_USERNAME = "112288349@qq.com"
+MAIL_PASSWORD = "kgqembbxywxfcbbb"
+MAIL_DEFAULT_SENDER = "112288349@qq.com"
+

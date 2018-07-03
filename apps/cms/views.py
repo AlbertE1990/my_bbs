@@ -1,13 +1,15 @@
 # -*- coding:utf-8 -*-
 from flask import Blueprint,render_template,request,session,redirect,url_for,g
 from flask.views import MethodView
-from .forms import LoginForm,ResetPasswordForm,ProfileForm
+from .forms import LoginForm,ResetPasswordForm,ProfileForm,ResetEmailForm,validate_email
 from .modles import CMSUser,CMSUserDetail
 from utils import restful
 from config import CMS_USER_ID
 from .decorators import login_required
 from exts import db
-import os
+import string
+import random
+from flask_mail import Message
 
 bp = Blueprint('cms',__name__,url_prefix='/cms')
 
@@ -109,12 +111,37 @@ class ResetPasswordView(MethodView):
 bp.add_url_rule('/resetpwd',view_func=ResetPasswordView.as_view('resetpwd'))
 
 
-@bp.route('/resetemail')
-@login_required
-def reset_email():
+class ResetEmailView(MethodView):
 
-    return render_template('cms/cms_resetemail.html')
+    def get(self):
+        return render_template('cms/cms_resetemail.html')
+
+    def post(self):
+        form = ResetEmailForm(request.form)
+        if form.validate():
+            print(form.email.data)
+
+#邮箱验证码
+@bp.route('/email_captcha/')
+def email_captcha():
+    email = request.args.get('email')
+    if not validate_email(email):
+        return restful.params_error(message='邮箱格式错误')
+    if email == g.cms_user.email:
+        return restful.params_error(message='要修改的邮箱和原邮箱一致，你确定是要修改邮箱')
+    source = list(string.ascii_lowercase) + list(string.digits)
+    captcha = "".join(random.sample(source, 6))
+    body = '您的验证码是：%s' % captcha
+    message = Message('CMS管理后台邮件发送', recipients=[email], body=body)
+    cms_memcache.set(email,captcha)
+    try:
+        mail.send(message=message)
+    except:
+        return restful.server_error()
+    return restful.success(message="邮件发送成功请注意查收！")
 
 
+
+bp.add_url_rule('/resetemail',view_func=ResetEmailView.as_view('resetemail'))
 bp.add_url_rule('/login/',endpoint='login',view_func=LoginView.as_view('login'))
 

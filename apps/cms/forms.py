@@ -1,6 +1,7 @@
 # -*- coding:utf-8 -*-
 from wtforms import Form,StringField,BooleanField,IntegerField
 from wtforms.validators import Email,Length,EqualTo,DataRequired,Regexp
+import re
 
 class LoginForm(Form):
     email = StringField(validators=[Email(message="邮箱格式不正确!")])
@@ -22,3 +23,16 @@ class ProfileForm(Form):
     gender = StringField()
     intro = StringField()
     avatar = StringField()
+
+class ResetEmailForm(Form):
+
+    pwd = StringField(validators=[Length(min=6, message='请输入6位以上的密码！')])
+    email = StringField(validators=[Email(message='邮箱格式不正确！')])
+    captcha = StringField(validators=[Length(min=4,max=4, message='请输入4位验证码！')])
+
+
+def validate_email(email):
+    r = re.compile("^[a-zA-Z0-9_]+@[a-zA-Z0-9_]+\.[a-zA-Z]{1,4}$")
+    if re.match(r, email):
+        return True
+    return False
