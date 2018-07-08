@@ -1371,3 +1371,7 @@ h3.tl-title {
     font-size: 16px;
     padding-right: 10px;
 }
+.btn.active{
+	background-color:rgba(66, 139, 202, 0.45);
+	color:white;
+}

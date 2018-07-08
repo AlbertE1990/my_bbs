@@ -1,12 +1,17 @@
 # -*- coding:utf-8 -*-
 from wtforms import Form,StringField,BooleanField,IntegerField
-from wtforms.validators import Email,Length,EqualTo,DataRequired,Regexp
+from wtforms.validators import Email,Length,EqualTo,DataRequired,Regexp,ValidationError
 import re
+from flask import g
+from utils import my_redis
+from .modles import CMSUser
+
 
 class LoginForm(Form):
     email = StringField(validators=[Email(message="邮箱格式不正确!")])
     password = StringField(validators=[Length(min=6,message='请输入6位以上的密码！')])
     remember = BooleanField()
+
 
 class ResetPasswordForm(Form):
     raw_pwd = StringField(validators=[Length(min=6, message='请输入6位以上的密码！')])
@@ -28,11 +33,39 @@ class ResetEmailForm(Form):
 
     pwd = StringField(validators=[Length(min=6, message='请输入6位以上的密码！')])
     email = StringField(validators=[Email(message='邮箱格式不正确！')])
-    captcha = StringField(validators=[Length(min=4,max=4, message='请输入4位验证码！')])
+    captcha = StringField(validators=[Length(min=6,max=6, message='请输入6位验证码！')])
+
+    def validate_pwd(self,field):
+        if not g.user.check_password(field.data):
+            raise ValidationError('密码错误！')
+
+    def validate_email(self,field):
+        if field.data == g.user.email:
+            raise ValidationError('要修改的邮箱和原邮箱一致，你确定是要修改邮箱?')
+
+    def validate_captcha(self,field):
+        email = self.email.data
+        if field.data != my_redis.get(email).decode('utf-8'):
+            raise ValidationError('验证码错误！')
 
 
 def validate_email(email):
     r = re.compile("^[a-zA-Z0-9_]+@[a-zA-Z0-9_]+\.[a-zA-Z]{1,4}$")
-    if re.match(r, email):
-        return True
-    return False
+    if not re.match(r, email):
+        return {'flag':False,'message':'邮箱格式错误!'}
+    if email == g.user.email:
+        return {'flag':False,'message':'要修改的邮箱和原邮箱一致，你确定是要修改邮箱?'}
+    return {'flag':True}
+
+
+class RegisterForm(Form):
+
+    email = StringField(validators=[Email(message="邮箱格式不正确!")])
+    new_pwd1 = StringField(validators=[Length(min=6, message='请输入6位以上的密码！')])
+    new_pwd2 = StringField(validators=[EqualTo('new_pwd1')])
+    username = StringField(validators=[DataRequired(message="用户名不能为空！")])
+
+    def validate_email(self,field):
+        email = field.data
+        if CMSUser.query.filter_by(email=email).first():
+            raise ValidationError('该邮箱已经注册！')

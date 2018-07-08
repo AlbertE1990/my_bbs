@@ -6,7 +6,7 @@ $(function () {
 
   //点击取消按钮执行函数
   function reset() {
-    $('#cancel').parents('form').find('input').val('');
+    $('form').find('input').val('');
   };
 
   //修改密码开始
@@ -48,7 +48,6 @@ $(function () {
   //更改密码点击submit
     $('#reset-pwd').click(function (e) {
       e.preventDefault();
-      console.log('点击了');
       var raw_pwd = raw_pwdE.val();
       var new_pwd1 = new_pwd1E.val();
       var new_pwd2 = new_pwd2E.val();
@@ -84,11 +83,20 @@ $(function () {
     //修改密码结束
 
 
-  //添加个人详情
+  //个人详情页面
+
+  var db_gender = $('#gender').attr('data-gender');
+
+  if(db_gender == '1'){
+    $('#gender > label:nth-child(1)').addClass('active')
+  };
+  if(db_gender == '0'){
+    $('#gender > label:nth-child(2)').addClass('active')
+  };
   //点击submit
   $('#sumbit-profile').click(function(e){
     e.preventDefault();
-    var gender = $('#gender').find('input[name="gender"]:checked').val();
+    var gender = $('input[name="gender"]:checked').val();
     var birth = $('#date-of-birth').val();
     var phone = $('#phone').val();
     var intro = $('#description').val();
@@ -106,8 +114,7 @@ $(function () {
       'success':function(data){
         if(data.code == 200){
           parent.xtalert.alertSuccessToast(data.message);
-
-
+          location.reload();
         }else{
           parent.xtalert.alertSuccessToast(data.message)
          }
@@ -143,11 +150,61 @@ $(function () {
 
   //点击获取验证码
   $('#captcha-btn').click(function (e) {
+    console.log('点击了验证码');
+    var new_email = $('#new-email').val();
+    myajax.get({
+      'url':'/cms/email_captcha/',
+      'data':{
+        'email':new_email
+      },
+      'success':function (data) {
+                if (data.code == 200){
+                    parent.xtalert.alertSuccessToast(data.message)
+                }else{
+                    parent.xtalert.alertInfo(data.message);
+                    
+                }
+      },
+      'fail':function () {
+          parent.xtalert.alertNetworkError()
+      }
+
+    });
 
   });
 
+  //注册CMS新用户
+  $('#register-submit').click(function (e) {
+      var new_pwd1 = $('#new-pwd1').val();
+      var new_pwd2 = $('#new-pwd2').val();
+      var email = $('#email').val();
+      var username = $('#username').val();
 
+      if (new_pwd1 != new_pwd2){
+        console.log('两次密码不一至')
+      }else{
+        myajax.post({
+          'url':'/cms/cms_register/',
+          'data':{
+            'new_pwd1':new_pwd1,
+            'new_pwd2':new_pwd2,
+            'email':email,
+            'username':username
+          },
+          'success':function (data) {
+            if(data.code == 200){
+              parent.xtalert.alertSuccessToast(data.message);
+              $('#myModal2').modal('hide');
+              location.reload()
 
+            }else{
+              parent.xtalert.alertErrorToast(data.message)
+            }
+          }
+        })
+      }
+
+  });
 
 });
 

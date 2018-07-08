@@ -36,12 +36,12 @@
             <form data-validate="parsley" method="post" novalidate class="form-horizontal label-left" id="user-form">
               <div class="row">
                 <div class="col-md-4">
-                  <div class="text-align-center"> <img style="height: 112px;" alt="64x64" src="{{ null | default('http://127.0.0.1:8000/static/cms/images/user.jpg')  }}" class="img-circle"> </div>
+                  <div class="text-align-center"> <img style="height: 112px;" alt="64x64" src="{{ detail.avatar }}" class="img-circle"> </div>
                 </div>
                 <div class="col-md-8">
                   <h3 class="no-margin" id="username">{{user.username}}</h3>
                   <address>
-                    <strong>角色：</strong><br>
+                    角色：<strong>{{ user.role.name|default('未知角色') }}</strong><br>
                     <abbr title="Work email">邮箱：</abbr> <a href="mailto:#">{{user.email}}</a><br>
                     <abbr title="Work Phone">电话号码:</abbr> {{ detail.phone |default('还未添加电话号码')}}
                   </address>
@@ -66,11 +66,11 @@
                   </div>
                   <div class="col-sm-9">
                     <div class="form-group">
-                      <div data-toggle="buttons" class="btn-group" id="gender">
-                        <label data-toggle-passive-class="btn-default" data-toggle-class="btn-primary" class="btn btn-primary active">
+                      <div data-toggle="buttons" class="btn-group" id="gender" data-gender={{ detail.gender }}>
+                        <label  class="btn btn-default">
                           <input type="radio" value=1 name="gender">
                           男 </label>
-                        <label data-toggle-passive-class="btn-default" data-toggle-class="btn-primary" class="btn btn-default">
+                        <label  class="btn btn-default">
                           <input type="radio" value=0 name="gender">
                           女 </label>
                       </div>
@@ -83,7 +83,7 @@
                   </div>
                   <div class="col-sm-9">
                     <div class="form-group">
-                      <input type="text" value="" name="date-of-birth"  class=" date-picker parsley-validated col-sm-6" id="date-of-birth" value="{{ detail.birthday }}">
+                      <input type="text"  name="date-of-birth"  class=" col-sm-6" id="date-of-birth" value="{{ detail.birthday }}">
                     </div>
                   </div>
                 </div>

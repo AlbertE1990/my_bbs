@@ -4,10 +4,7 @@ from apps.cms import bp as cms_bp
 from apps.front import bp as front_bp
 from flask_wtf import CSRFProtect
 from exts import db,mail
-
-
-
-
+from flask_bootstrap import Bootstrap
 
 def create_app():
     app = Flask(__name__)
@@ -17,6 +14,7 @@ def create_app():
     db.init_app(app)
     mail.init_app(app)
     CSRFProtect(app)
+    bootstrap = Bootstrap(app)
     return app
 
 app = create_app()

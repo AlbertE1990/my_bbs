@@ -1,12 +1,12 @@
 # -*- coding:utf-8 -*-
 from flask import Blueprint,render_template,request,session,redirect,url_for,g
 from flask.views import MethodView
-from .forms import LoginForm,ResetPasswordForm,ProfileForm,ResetEmailForm,validate_email
+from .forms import LoginForm,ResetPasswordForm,ProfileForm,ResetEmailForm,validate_email,RegisterForm
 from .modles import CMSUser,CMSUserDetail
-from utils import restful
+from utils import restful,my_redis
 from config import CMS_USER_ID
 from .decorators import login_required
-from exts import db
+from exts import db,mail
 import string
 import random
 from flask_mail import Message
@@ -41,9 +41,12 @@ class LoginView(MethodView):
                 session.permanent = remember
                 return restful.success(message='登录成功!')
             else:
-                return restful.params_error(message='邮箱或者密码错误!')
+                return restful.params_error(message='邮箱或者密码错误！')
+
         else:
+            print(form.errors)
             return restful.params_error(message= '邮箱或者密码格式错误！')
+
 
 #注销
 @bp.route('/logout')
@@ -57,19 +60,16 @@ def logout():
 class ProfileView(MethodView):
     decorators = [login_required]
 
-    def get(self):
-        ud = g.user.detail
-        print(str(ud.birthday))
-        print('avatar',ud.avatar)
 
+    def get(self):
         return render_template('cms/cms_profile.html')
 
     def post(self):
-        print(request.form)
+        #有待优化
+        detail = g.user.detail
         form = ProfileForm(request.form)
-        print(form)
         if form.validate():
-            data={}
+            data = {}
             data['uid'] = g.user.id
             data['name'] = form.name.data
             data['phone'] = form.phone.data
@@ -77,7 +77,19 @@ class ProfileView(MethodView):
             data['gender'] = form.gender.data
             data['intro'] = form.intro.data
             data['avatar'] = form.avatar.data
-            detail = CMSUserDetail(**data)
+            d = {}
+            for k, v in data.items():
+                if v != '':
+                    d[k] = v
+            if detail:
+                detail.name = d.get('name')
+                detail.phone = d.get('phone')
+                detail.birthday = d.get('birthday')
+                detail.gender = d.get('gender')
+                detail.intro = d.get('intro')
+                detail.avatar = d.get('avatar')
+            else:
+                detail = CMSUserDetail(**d)
             db.session.add(detail)
             db.session.commit()
             return restful.success('信息保存成功！')
@@ -108,9 +120,10 @@ class ResetPasswordView(MethodView):
                 return restful.params_error('原始密码错误！')
         else:
             return restful.params_error('原始密码错误!')
-bp.add_url_rule('/resetpwd',view_func=ResetPasswordView.as_view('resetpwd'))
 
 
+
+#修改邮箱
 class ResetEmailView(MethodView):
 
     def get(self):
@@ -119,21 +132,30 @@ class ResetEmailView(MethodView):
     def post(self):
         form = ResetEmailForm(request.form)
         if form.validate():
-            print(form.email.data)
+            g.user.email = form.email.data
+            db.session.commit()
+            return restful.success(message='邮箱修改成功！')
+        else:
+            print(form.errors)
+            return restful.params_error(message='数据错误！')
+
 
 #邮箱验证码
 @bp.route('/email_captcha/')
+@login_required
 def email_captcha():
     email = request.args.get('email')
-    if not validate_email(email):
-        return restful.params_error(message='邮箱格式错误')
-    if email == g.cms_user.email:
-        return restful.params_error(message='要修改的邮箱和原邮箱一致，你确定是要修改邮箱')
+    validate_res = validate_email(email)
+    if not validate_res['flag']:
+        return restful.params_error(message=validate_res['message'])
+
     source = list(string.ascii_lowercase) + list(string.digits)
     captcha = "".join(random.sample(source, 6))
-    body = '您的验证码是：%s' % captcha
+    body = '您的验证码是：%s,验证码有效期为5分钟' % captcha
     message = Message('CMS管理后台邮件发送', recipients=[email], body=body)
-    cms_memcache.set(email,captcha)
+    my_redis.set(email,captcha,ex=300)
+    print('生成的验证码',captcha)
+
     try:
         mail.send(message=message)
     except:
@@ -141,7 +163,42 @@ def email_captcha():
     return restful.success(message="邮件发送成功请注意查收！")
 
 
+#cms用户管理
+@bp.route('/cms_users/')
+@login_required
+def cms_users():
+    users = CMSUser.query.all()
+    return render_template('cms/cms_user_manage.html',users=users)
 
+
+#注册cms用户
+
+def create_cms_user(username,password,email):
+    user = CMSUser(username=username,password=password,email=email)
+    db.session.add(user)
+    db.session.commit()
+
+
+@bp.route('/cms_register/',methods=['post'])
+@login_required
+def cms_register():
+    form = RegisterForm(request.form)
+    if form.validate():
+        username = form.username.data
+        email = form.email.data
+        password = form.new_pwd1.data
+        create_cms_user(username=username, password=password, email=email)
+        return restful.success(message='添加新用户成功！')
+    else:
+        print(form.errors)
+        return restful.params_error(message='注册数据有问题')
+
+
+
+
+
+
+bp.add_url_rule('/resetpwd',view_func=ResetPasswordView.as_view('resetpwd'))
 bp.add_url_rule('/resetemail',view_func=ResetEmailView.as_view('resetemail'))
 bp.add_url_rule('/login/',endpoint='login',view_func=LoginView.as_view('login'))
 

@@ -6,7 +6,7 @@ $(function () {
 
    var window_h = $(window).height();
 
-  $('.sub-menu li').click(function () {
+  $('#nav li').click(function () {
       var src = $(this).attr('data-src');
       $('iframe[name=icms]').attr('src',src);
       $(this).addClass('current').siblings('li').removeClass('current');
