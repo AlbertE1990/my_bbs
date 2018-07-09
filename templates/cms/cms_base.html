@@ -66,23 +66,17 @@
             <li data-src="https://www.baidu.com"> <a href="javascript:void(0)"> <i class="icon-angle-right"></i> 百度</a></li>
           </ul>
         </li>
-        <li><a href="javascript:void(0)"> <i class="icon-edit"></i> 帖子管理 <i
+        <li><a href="javascript:void(0)"> <i class="icon-edit"></i> 论坛管理 <i
             class="arrow icon-angle-left"></i></a>
           <ul class="sub-menu">
-            <li><a href="javascript:void(0)"> <i class="icon-angle-right"></i> Form Elements </a></li>
-            <li><a href="javascript:void(0)"> <i class="icon-angle-right"></i> Form Validation</a></li>
-            <li><a href="javascript:void(0)"> <i class="icon-angle-right"></i> Form Masks </a></li>
+            <li data-src={{ url_for('cms.boards') }}><a href="javascript:void(0)"> <i class="icon-angle-right"></i> 版块管理 </a></li>
+            <li data-src={{ url_for('cms.posts') }}><a href="javascript:void(0)"> <i class="icon-angle-right"></i> 帖子管理</a></li>
+            <li data-src={{ url_for('cms.comments') }}><a href="javascript:void(0)"> <i class="icon-angle-right"></i> 评论管理 </a></li>
+            <li data-src={{ url_for('cms.banners') }}><a href="javascript:void(0)"> <i class="icon-angle-right"></i> 轮播图管理 </a></li>
 
           </ul>
         </li>
-        <li><a href="javascript:void(0)"> <i class="icon-table"></i> 评论管理 <span
-            class="label label-info pull-right">2</span> <i class="arrow icon-angle-left"></i></a>
-          <ul class="sub-menu">
-            <li><a href="javascript:void(0)"> <i class="icon-angle-right"></i> Static </a></li>
-            <li><a href="javascript:void(0)"> <i class="icon-angle-right"></i> Dynamic </a></li>
-          </ul>
-        </li>
-        <li><a href="javascript:void(0)"> <i class="icon-bar-chart"></i>版块管理 </a></li>
+
         <li><a href="javascript:void(0)"> <i class="icon-flag"></i> 用户管理 <span
             class="label label-info pull-right">2</span> <i class="arrow icon-angle-left"></i></a>
           <ul class="sub-menu">
