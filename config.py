@@ -16,6 +16,7 @@ SQLALCHEMY_DATABASE_URI = DB_URI
 SQLALCHEMY_TRACK_MODIFICATIONS = False
 
 CMS_USER_ID = "you can not guess it"
+FRONT_USER_ID = "you can not guess it"
 
 #设置cookies过期时间,2小时
 PERMANENT_SESSION_LIFETIME = timedelta(hours=2)
@@ -28,4 +29,7 @@ MAIL_USE_TLS = True
 MAIL_USERNAME = "112288349@qq.com"
 MAIL_PASSWORD = "kgqembbxywxfcbbb"
 MAIL_DEFAULT_SENDER = "112288349@qq.com"
+
+#前端
+PER_PAGE = 10
 

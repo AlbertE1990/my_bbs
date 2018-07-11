@@ -1,14 +1,19 @@
 # -*- coding:utf-8 -*-
-from exts import db
+from exts import db,login_manager
 from datetime import datetime
 from werkzeug.security import generate_password_hash,check_password_hash
 import shortuuid
 from config import SECRET_KEY
 from flask import url_for
+from flask_login import UserMixin
 
+login_manager.login_view='cms.login'
 
+@login_manager.user_loader
+def load_user(user_id):
+    return CMSUser.query.get(user_id)
 
-class CMSUser(db.Model):
+class CMSUser(UserMixin,db.Model):
     __tablename__ = 'cms_user'
     id = db.Column(db.String(50),primary_key=True)
     username = db.Column(db.String(50),nullable=False)
@@ -32,6 +37,12 @@ class CMSUser(db.Model):
 
     def check_password(self,raw_password):
         return check_password_hash(self.password,raw_password)
+
+    def has_permission(self,permission):
+        if self.role.permissions & permission == permission:
+            return True
+        else:
+            return False
 
     def __repr__(self):
         return '<CMSUser username:%s>'%self.username
@@ -79,7 +90,7 @@ class CMSPermission():
     POSTER         = 0b00000010
     #3.管理评论权限
     COMMENTER      = 0b00000100
-    #4.管理版块权限
+    #4.管理版块权限,管理轮播图
     BOARDER        = 0b00001000
     #5.管理前台用户的权限
     FRONTUSER      = 0b00010000
@@ -87,6 +98,10 @@ class CMSPermission():
     CMSUSER        = 0b00100000
     #7.管理后台管理员的权限
     ADMINER        = 0b01000000
+
+
+# class CMSNav():
+#
 
 
 CmsRoleUser = db.Table(

@@ -1,6 +1,6 @@
 {% from "common/_macors.html" import static,bootstrap_plugin %}
-{% set user = g.user %}
-{% set detail = g.user.detail %}
+{% set user = current_user %}
+{% set detail = current_user.detail %}
 <!DOCTYPE html>
 <html lang="en">
 <head>

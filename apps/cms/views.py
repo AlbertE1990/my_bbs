@@ -5,16 +5,19 @@ from .forms import LoginForm,ResetPasswordForm,ProfileForm,ResetEmailForm,valida
 from .modles import CMSUser,CMSUserDetail,CMSPermission
 from utils import restful,my_redis
 from config import CMS_USER_ID
-from .decorators import login_required,permission
+from .decorators import permission
 from exts import db,mail
 import string
 import random
 from flask_mail import Message
+from flask_login import login_required,login_user,logout_user
 
 bp = Blueprint('cms',__name__,url_prefix='/cms')
 
+
 import os
 base_path = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+
 
 
 
@@ -22,6 +25,7 @@ base_path = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 @login_required
 def index():
     return render_template('cms/cms_index.html')
+
 
 #登陆
 class LoginView(MethodView):
@@ -37,8 +41,9 @@ class LoginView(MethodView):
             remember = form.remember.data
             user = CMSUser.query.filter_by(email=email).first()
             if user and user.check_password(password):
-                session[CMS_USER_ID] = user.id
-                session.permanent = remember
+                # session[CMS_USER_ID] = user.id
+                # session.permanent = remember
+                login_user(user)
                 return restful.success(message='登录成功!')
             else:
                 return restful.params_error(message='邮箱或者密码错误！')
@@ -52,7 +57,7 @@ class LoginView(MethodView):
 @bp.route('/logout')
 @login_required
 def logout():
-    del session[CMS_USER_ID]
+    logout_user()
     return redirect(url_for('cms.login'))
 
 
@@ -401,3 +406,6 @@ bp.add_url_rule('/resetpwd',view_func=ResetPasswordView.as_view('resetpwd'))
 bp.add_url_rule('/resetemail',view_func=ResetEmailView.as_view('resetemail'))
 bp.add_url_rule('/login/',endpoint='login',view_func=LoginView.as_view('login'))
 
+@bp.context_processor
+def cms_context_processor():
+    return{'CMSPermission':CMSPermission}

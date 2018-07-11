@@ -1,5 +1,5 @@
 {% from "common/_macors.html" import static,bootstrap_plugin %}
-{% set user = g.user %}
+{% set user = current_user %}
 <!DOCTYPE html>
 <html>
 <head>
@@ -56,8 +56,7 @@
     <div id="side-nav">
       <ul id="nav">
         <li><a href={{ url_for('cms.index') }}> <i class="icon-dashboard"></i> 首页 </a></li>
-        <li><a href="javascript:void(0)"> <i class="icon-desktop"></i> 个人中心 <i
-            class="arrow icon-angle-left"></i></a>
+        <li><a href="javascript:void(0)"> <i class="icon-desktop"></i> 个人中心 <i class="arrow icon-angle-left"></i></a>
           <ul class="sub-menu">
             <li id="profile-iframe" data-src="/cms/profile"><a href='javascript:void(0)'> <i
                 class="icon-angle-right"></i> 个人信息 </a></li>
@@ -66,38 +65,52 @@
             <li data-src="https://www.baidu.com"> <a href="javascript:void(0)"> <i class="icon-angle-right"></i> 百度</a></li>
           </ul>
         </li>
-        <li><a href="javascript:void(0)"> <i class="icon-edit"></i> 论坛管理 <i
-            class="arrow icon-angle-left"></i></a>
+        <li><a href="javascript:void(0)"> <i class="icon-edit"></i> 论坛管理 <i class="arrow icon-angle-left"></i></a>
           <ul class="sub-menu">
+            {% if user.has_permission(CMSPermission.BOARDER) %}
             <li data-src={{ url_for('cms.boards') }}><a href="javascript:void(0)"> <i class="icon-angle-right"></i> 版块管理 </a></li>
+            {% endif %}
+            {% if user.has_permission(CMSPermission.POSTER) %}
             <li data-src={{ url_for('cms.posts') }}><a href="javascript:void(0)"> <i class="icon-angle-right"></i> 帖子管理</a></li>
+            {% endif  %}
+            {% if user.has_permission(CMSPermission.COMMENTER) %}
             <li data-src={{ url_for('cms.comments') }}><a href="javascript:void(0)"> <i class="icon-angle-right"></i> 评论管理 </a></li>
+            {% endif %}
+            {% if user.has_permission(CMSPermission.BOARDER)  %}
             <li data-src={{ url_for('cms.banners') }}><a href="javascript:void(0)"> <i class="icon-angle-right"></i> 轮播图管理 </a></li>
+            {% endif %}
 
           </ul>
         </li>
 
-        <li><a href="javascript:void(0)"> <i class="icon-flag"></i> 用户管理 <span
-            class="label label-info pull-right">2</span> <i class="arrow icon-angle-left"></i></a>
+        <li><a href="javascript:void(0)"> <i class="icon-flag"></i> 前台用户管理 <i class="arrow icon-angle-left"></i></a>
           <ul class="sub-menu">
-            <li><a href="javascript:void(0)"> <i class="icon-angle-right"></i> New-Icons </a></li>
-            <li><a href="javascript:void(0)"> <i class="icon-angle-right"></i> Icons </a></li>
+            {% if user.has_permission(CMSPermission.FRONTUSER) %}
+            <li><a href="javascript:void(0)"> <i class="icon-angle-right"></i> 前台用户管理 </a></li>
+            {% endif %}
           </ul>
         </li>
-        <li><a href="javascript:void(0)"> <i class="icon-picture"></i> 组管理 </a></li>
-        <li><a href="javascript:void(0)"> <i class="icon-time"></i> CMS用户管理 </a>
+        <li><a href="javascript:void(0)"> <i class="icon-picture"></i> 前台用户组管理 <i class="arrow icon-angle-left"></i></a>
           <ul class="sub-menu">
+            {% if user.has_permission(CMSPermission.FRONTUSER) %}
+            <li><a href="javascript:void(0)"> <i class="icon-angle-right"></i> 前台用户组管理 </a></li>
+            {% endif %}
+          </ul>
+        </li>
+
+        <li><a href="javascript:void(0)"> <i class="icon-time"></i> CMS用户管理 <i class="arrow icon-angle-left"></i></a>
+          <ul class="sub-menu">
+            {% if user.has_permission(CMSPermission.CMSUSER) %}
             <li data-src={{ url_for('cms.cms_users') }}><a href="javascript:void(0)"> <i class="icon-angle-right"></i> CMS用户管理 </a></li>
+            {% endif %}
           </ul>
         </li>
         <li><a href="javascript:void(0)"> <i class="icon-folder-open-alt"></i> CMS组管理 <i
             class="arrow icon-angle-left"></i></a>
           <ul class="sub-menu">
-            <li><a href="javascript:void(0)"> <i class="icon-angle-right"></i> Login </a></li>
-            <li><a href="javascript:void(0)"> <i class="icon-angle-right"></i> User Profile </a></li>
-            <li><a href="javascript:void(0)"> <i class="icon-angle-right"></i> Mailbox </a></li>
-            <li><a href="javascript:void(0)"> <i class="icon-angle-right"></i> Calendar </a></li>
-            <li><a href="javascript:void(0)"> <i class="icon-angle-right"></i> 404-page </a></li>
+            {% if user.has_permission(CMSPermission.ADMINER) %}
+            <li><a href="javascript:void(0)"> <i class="icon-angle-right"></i> CMS组管理 </a></li>
+            {% endif %}
           </ul>
         </li>
       </ul>

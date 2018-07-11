@@ -49,7 +49,7 @@ def create_role():
 
 
 def make_shell_context():
-    return dict(app=app, db=db, CMSUser=CMSUser, CMSRole=CMSRole,CmsRoleUser=CmsRoleUser)
+    return dict(app=app, db=db, CMSUser=CMSUser, CMSRole=CMSRole,CmsRoleUser=CmsRoleUser,CMSPermission=CMSPermission)
 manager.add_command("shell", Shell(make_context=make_shell_context))
 
 
