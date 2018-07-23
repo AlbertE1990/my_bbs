@@ -8,7 +8,7 @@ $(function(){
         var cap_val = $(this).val();
         if(cap_val.length==4){
             $('#cap-icon').removeClass('glyphicon-question-sign');
-            zlajax.get({
+            myajax.get({
             'url':'/captcha/check/',
             'data':{
                 'cap_val':cap_val
@@ -37,7 +37,7 @@ $(function(){
         var password1 = $('#password1').val();
         var password2 = $('#password2').val();
         var graph_captcha = $('#graph-captcha').val();
-        zlajax.post({
+        myajax.post({
             'url':'/signup/',
             'data':{
                 'telephone':telephone,
@@ -77,7 +77,7 @@ $(function(){
         var tel = $('#telephone').val();
         var pwd = $('#password').val();
         var graph_captcha = $('#graph-captcha').val();
-        zlajax.post({
+        myajax.post({
             'url':'/login/',
             'data':{
                 'telephone':tel,
@@ -112,6 +112,7 @@ $(function(){
                 xtalert.alertNetworkError();
             }
 
-        })
+        });
     })
-})
+
+});

@@ -12,12 +12,14 @@ class BannerModel(db.Model):
     priority = db.Column(db.Integer,default=0)
     create_time = db.Column(db.DateTime,default=datetime.now)
 
+
 #板块
 class BoardModel(db.Model):
     __tablename__ = 'board'
     id = db.Column(db.Integer,primary_key=True,autoincrement=True)
     name = db.Column(db.String(255),nullable=False)
     create_time = db.Column(db.DateTime,default=datetime.now)
+
 
 #帖子
 class PostModel(db.Model):
@@ -32,6 +34,8 @@ class PostModel(db.Model):
     author = db.relationship('FrontUser',backref='posts')
     board = db.relationship('BoardModel',backref='posts')
 
+    __mapper_args__ = {'order_by': create_time.desc()}
+
 #评论
 class CommentModel(db.Model):
     __tablename__ = 'comment'
@@ -43,6 +47,9 @@ class CommentModel(db.Model):
 
     author = db.relationship('FrontUser',backref='comments')
     post = db.relationship('PostModel',backref = 'comments')
+
+    __mapper_args__ ={'order_by':create_time.desc()}
+
 
 #精华帖
 class HighlightPostModel(db.Model):

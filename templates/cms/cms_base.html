@@ -86,7 +86,7 @@
         <li><a href="javascript:void(0)"> <i class="icon-flag"></i> 前台用户管理 <i class="arrow icon-angle-left"></i></a>
           <ul class="sub-menu">
             {% if user.has_permission(CMSPermission.FRONTUSER) %}
-            <li><a href="javascript:void(0)"> <i class="icon-angle-right"></i> 前台用户管理 </a></li>
+            <li data-src={{ url_for('cms.fusers')}} ><a href="javascript:void(0)"> <i class="icon-angle-right"></i> 前台用户管理 </a></li>
             {% endif %}
           </ul>
         </li>

@@ -18,7 +18,9 @@ class SignupForm(BaseForm):
         if graph_captcha.lower() != graph_captcha_mem.lower():
             raise ValidationError('验证码错误')
 
+
 class LoginForm(BaseForm):
+
     telephone = StringField(validators=[Regexp(r"1[345789]\d{9}", message='请输入正确的手机号码！')])
     password = StringField(validators=[Length(min=6,max=20,message='密码长度为6-20个字符！')])
     graph_captcha = StringField(validators=[Regexp(r"[0-9a-zA-Z]{4}", message='验证码格式错误！')])
@@ -26,10 +28,10 @@ class LoginForm(BaseForm):
 
     def validate_graph_captcha(self, field):
         graph_captcha = field.data
-        graph_captcha_mem = my_redis.get('captcha')
-        if not graph_captcha_mem:
+        graph_captcha_redis = my_redis.get('captcha').decode('utf8')
+        if not graph_captcha_redis:
             raise ValidationError('图形验证码发生错误')
-        if graph_captcha.lower() != graph_captcha_mem.lower():
+        if graph_captcha.lower() != graph_captcha_redis.lower():
             raise ValidationError('验证码错误')
 
 class AddPostForm(BaseForm):

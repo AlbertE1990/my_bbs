@@ -1,0 +1,132 @@
+{% from "common/_macors.html" import static,bootstrap_plugin %}
+{#{% set user = current_user %}#}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="csrf_token" content="{{ csrf_token() }}" >
+  <title>Title</title>
+  {{ bootstrap_plugin() }}
+
+  <link href={{ static('cms/css/thin-admin.css') }} rel="stylesheet" media="screen">
+  <link href={{ static('cms/css/font-awesome.css') }} rel="stylesheet" media="screen">
+  <link href={{ static('cms/style/style.css') }} rel="stylesheet" media="screen">
+  <link href={{ static('cms/style/nestable.css') }} rel="stylesheet" media="screen">
+  <script src={{ static('cms/js/iframe.js') }}></script>
+  <link rel="stylesheet" href={{ static('cms/css/iframe.css') }}>
+  <link href="{{ static('cms/css/font-awesome.css') }}" rel="stylesheet" media="screen">
+  <link href="{{ static('cms/style/style.css') }}" rel="stylesheet">
+  <script src={{ static('common/js/myajax.js') }}></script>
+
+
+
+</head>
+<body>
+
+<div class="content container">
+  <div class="row">
+    <div class="col-sm-8">
+      <div class="widget">
+        <div class="widget-header"> <i class="icon-table"></i>
+          <h3>CMS用户</h3>
+        </div>
+        <div class="widget-content">
+          <div class="body">
+            <table class="table table-striped ">
+              <thead>
+              <tr>
+                <th></th>
+                <th>头像</th>
+                <th>姓名</th>
+                <th>电话号码</th>
+                <th>邮箱</th>
+                <th class="hidden-xs">Date</th>
+              </tr>
+              </thead>
+              <tbody>
+              {% for user in users %}
+
+                  <tr class="center-block">
+                    <td>{{ loop.index }}</td>
+                    <td ><img height="30px" src={{ user.avatar }} ></td>
+                    <td> {{ user.username }} </td>
+                    <td> {{ user.telephone }} </td>
+                    <td> {{ user.email }} </td>
+                    <td class="hidden-xs">
+                      <button class="btn btn-sm btn-primary"> Edit </button>
+                      <button data-toggle="button" class="btn btn-sm btn-warning"> Delete </button></td>
+                  </tr>
+
+
+              {% endfor %}
+
+              </tbody>
+            </table>
+          </div>
+          <div class="body">
+            <button data-target="#myModal2" data-toggle="modal" class="btn btn-success btn-lg btn-block" type="button">添加新用户</button>
+            <div style="display: none;" aria-hidden="true" aria-labelledby="myModalLabel" role="dialog" tabindex="-1" class="modal fade" id="myModal2">
+              <div class="modal-dialog">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <button aria-hidden="true" data-dismiss="modal" class="close" type="button">×</button>
+                    <h4 id="myModalLabel2" class="modal-title">添加新用户</h4>
+                  </div>
+                  <div class="modal-body">
+                    <form method="post" class="form-horizontal">
+                      <fieldset>
+                        <div class="form-group lable-padd">
+                          <label for="email" class=" col-sm-3">邮箱：</label>
+                          <div class="col-sm-6">
+                            <input type="email" name="email" id="email" class="form-control">
+                          </div>
+                        </div>
+                        <div class="form-group lable-padd">
+                          <label for="new-pwd1" class="col-sm-3">密码：</label>
+                          <div class="col-sm-6">
+                            <input type="password" name="new-pwd1" id="new-pwd1" class="form-control">
+                          </div>
+                          <div class="col-sm-3">
+
+                          </div>
+                        </div>
+                        <div class="form-group lable-padd">
+                          <label for="new-pwd2" class=" col-sm-3">重复密码：</label>
+                          <div class="col-sm-6">
+                            <input type="password" name="new-pwd2" id="new-pwd2" class="form-control">
+                          </div>
+                          <div class="col-sm-3">
+
+                          </div>
+                        </div>
+                        <div class="form-group lable-padd">
+                          <label for="usrname" class=" col-sm-3">用户名：</label>
+                          <div class="col-sm-6">
+                            <input type="text" name="usrname" id="username" class="form-control">
+                          </div>
+                        </div>
+                      </fieldset>
+                    </form>
+                  </div>
+                  <div class="modal-footer">
+                    <button data-dismiss="modal" class="btn btn-default" type="button">取消</button>
+                    <button class="btn btn-primary" type="button" id="register-submit">提交</button>
+                  </div>
+                </div>
+                <!-- /.modal-content -->
+              </div>
+              <!-- /.modal-dialog -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-8">
+
+    </div>
+  </div>
+
+
+</div>
+</body>
+</html>

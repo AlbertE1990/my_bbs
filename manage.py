@@ -4,6 +4,9 @@ from exts import db
 from my_bbs import app
 from flask_script import Manager,Shell
 from apps.cms.modles import CMSUser,CMSRole,CMSPermission,CmsRoleUser
+from random import choice
+import json
+
 
 manager = Manager(app)
 Migrate(app,db)
@@ -50,7 +53,74 @@ def create_role():
 
 def make_shell_context():
     return dict(app=app, db=db, CMSUser=CMSUser, CMSRole=CMSRole,CmsRoleUser=CmsRoleUser,CMSPermission=CMSPermission)
+
 manager.add_command("shell", Shell(make_context=make_shell_context))
+
+@manager.command
+def hello():
+    return "hello world!"
+
+#测试数据
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy import func
+from faker import Faker
+from apps.front.models import FrontUser
+from apps.models import PostModel,CommentModel,BoardModel
+
+fake = Faker(locale='zh_CN')
+
+@manager.command
+def front_users(count=30):
+    i = 0
+    while i < count:
+        u = FrontUser(
+            telephone = fake.phone_number(),
+            email=fake.email(),
+            username=fake.user_name(),
+            password='password',
+            realname=fake.name(),
+            join_time=fake.past_datetime(),
+            avatar=fake.image_url()
+        )
+        db.session.add(u)
+        try:
+            db.session.commit()
+            i += 1
+        except IntegrityError:
+            db.session.rollback()
+    return '前端用户数据生成成功！'
+
+@manager.command
+def posts(count=100):
+
+    for i in range(count):
+        author_id = FrontUser.query.order_by(func.rand()).limit(1).first().id
+        board_id = BoardModel.query.order_by(func.rand()).limit(1).first().id
+        p = PostModel(
+            title = fake.paragraph(1),
+            content=fake.text(),
+            create_time=fake.past_datetime(),
+            author_id=author_id,
+            board_id=board_id
+        )
+        db.session.add(p)
+    db.session.commit()
+    return '帖子数据生成成功！'
+
+@manager.command
+def change_avatar():
+    with open('avatar.json', 'r',encoding='utf-8') as f:
+        imgs = json.load(f)
+
+    front_users = FrontUser.query.all()
+    for user in front_users:
+        i = choice(imgs)
+        try:
+            user.avatar = i
+            db.session.commit()
+        except Exception as e:
+            pass
+    print('成功！')
 
 
 if __name__ == '__main__':

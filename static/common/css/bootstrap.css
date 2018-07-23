@@ -2094,8 +2094,8 @@ input[type="submit"].btn-block, input[type="reset"].btn-block, input[type="butto
 
 @font-face {
 	font-family: 'Glyphicons Halflings';
-	src: url('../fonts/glyphicons-halflings-regular.eot');
-	src: url(http://www.riaxe.com/marketplace/thin-admin/fonts/glyphicons-halflings-regular.eot?#iefixx') format('embedded-opentype'), url('../fonts/glyphicons-halflings-regular.woff') format('woff'), url('../fonts/glyphicons-halflings-regular.ttf') format('truetype'), url(http://www.riaxe.com/marketplace/thin-admin/fonts/glyphicons-halflings-regular.svg#glyphicons-halflingsregularr') format('svg');
+	/*src: url('../fonts/glyphicons-halflings-regular.eot');*/
+	/*src: url(http://www.riaxe.com/marketplace/thin-admin/fonts/glyphicons-halflings-regular.eot?#iefixx') format('embedded-opentype'), url('../fonts/glyphicons-halflings-regular.woff') format('woff'), url('../fonts/glyphicons-halflings-regular.ttf') format('truetype'), url(http://www.riaxe.com/marketplace/thin-admin/fonts/glyphicons-halflings-regular.svg#glyphicons-halflingsregularr') format('svg');*/
 }
 
 .glyphicon {

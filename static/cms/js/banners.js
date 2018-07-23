@@ -41,9 +41,9 @@ $(function () {
         }
 
         if (!name || !image_url || !link_url || !priority){
-            xtalert.alertInfoToast('轮播图数据不完整！')
+            parent.xtalert.alertInfoToast('轮播图数据不完整！')
         }else{
-            zlajax.post({
+            myajax.post({
                 'url':url,
                 'data':{
                     'name':name,
@@ -57,11 +57,11 @@ $(function () {
 
                         location.reload();
                     }else {
-                        xtalert.alertError(data.message)
+                        parent.xtalert.alertError(data.message)
                     }
                 },
                 'fail':function () {
-                    xtalert.alertNetworkError()
+                    parent.xtalert.alertNetworkError()
                 }
             })
         }
@@ -93,7 +93,7 @@ $(function () {
         tr = $(this).parent().parent();
         id = tr.attr('data-id');
         function delete_banner(){
-            zlajax.get({
+            myajax.get({
                 'url':'/cms/dbanners/',
                 'data':{
                     'id':id
@@ -102,15 +102,15 @@ $(function () {
                     if(data.code==200){
                         location.reload();
                     }else{
-                        xtalert.alertError(data.message)
+                        parent.xtalert.alertError(data.message)
                     }
                 },
                 'fail':function () {
-                    xtalert.alertNetworkError()
+                    parent.xtalert.alertNetworkError()
                 }
             })
         };
-        xtalert.alertConfirm({
+        parent.xtalert.alertConfirm({
             'title':'删除',
             'msg':'你确定要删除此轮播图?',
             'confirmText':'删除',

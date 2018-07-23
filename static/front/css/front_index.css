@@ -1,3 +1,12 @@
+.row{
+    padding-bottom:20px;
+}
+.box{
+  background-color:#fff;
+  border-radius:5px;
+  border:1px solid #ddd;
+  padding:0 10px;
+}
 .index-banner{
     border-radius: 10px;
     overflow: hidden;
@@ -6,27 +15,26 @@
 .sm-container a.btn{
     margin-bottom:10px;
 }
-.post-group{
-    width: 730px;
-    float:left;
-    border:1px solid #ddd;
-    margin-top:20px;
-    border-radius: 5px;
-    padding:10px;
+/*.post-group{*/
 
-}
-.post-group-head{
+
+    /*border:1px solid #ddd;*/
+    /*border-radius: 5px;*/
+    /*padding:10px;*/
+
+/*}*/
+.post-head{
     overflow: hidden;
     padding: 10px;
 }
-.post-group-head li{
+.post-head li{
     float: left;
     margin:0 10px;
     padding:10px 15px;
     width:100px;
-    text-align: center;
+
 }
-.post-group-head li a{
+.post-head li a{
     color: #333;
 }
 
@@ -75,9 +83,7 @@
 }
 .post-container{
     padding:20px;
-    border:1px solid #e7e7e7 ;
     width:100%;
-    background: #fff;
     margin-bottom: 10px;
 }
 .title{
@@ -90,9 +96,8 @@
     margin-bottom:20px;
 }
 .author-info-group{
-    width:100%;
+
     padding:10px;
-    border: 1px solid #e7e7e7 ;
     text-align: center;
 }
 .author-avatar img{

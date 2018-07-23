@@ -3,7 +3,7 @@ from utils.captcha import Captcha
 from utils import my_redis,restful
 from .forms import SignupForm,LoginForm,AddPostForm,AddCommentForm
 from .models import FrontUser
-from exts import db
+from exts import db,login_manager
 from .decorators import login_required
 from config import FRONT_USER_ID,PER_PAGE
 from ..models import BannerModel,BoardModel,PostModel,CommentModel
@@ -12,15 +12,42 @@ from flask_paginate import Pagination,get_page_parameter
 
 bp = Blueprint('front',__name__)
 
-#测试页面试图函数
+
+#ajax
 @bp.route('/test')
 def test():
-    return render_template('front/front_base1.html')
+    board_id = request.args.get('bd', type=int, default=None)
+    page = request.args.get(get_page_parameter(), type=int, default=1)
+    start = (page - 1) * PER_PAGE
+    end = start + PER_PAGE
+    banners = BannerModel.query.order_by(BannerModel.priority.desc()).limit(4)
+    boards = BoardModel.query.all()
+
+    if board_id:
+        query_obj = PostModel.query.filter_by(board_id=board_id)
+    else:
+        query_obj = PostModel.query
+    posts = query_obj.slice(start, end)
+    total = query_obj.count()
+    pagination = Pagination(page=page, total=total, bs_version=3)
+
+    context = {
+        'banners': banners,
+        'boards': boards,
+        'posts': posts,
+        'pagination': pagination
+    }
+
+
+    doc = render_template('front/front_index.html',**context)
+
+
 
 #首页视图函数
 @bp.route('/')
 def index():
-    board_id = request.args.get('bd',type=int,default=None)
+    board_id = request.args.get('bd',type=int,default=0)
+    order_id = request.args.get('order',type=int,default=0)
     page = request.args.get(get_page_parameter(),type=int,default=1)
     start = (page-1)*PER_PAGE
     end = start + PER_PAGE
@@ -29,6 +56,14 @@ def index():
 
     if board_id:
         query_obj = PostModel.query.filter_by(board_id=board_id)
+        if order_id==1:
+            query_obj = query_obj.group_by(PostModel.highlight)
+        elif order_id ==2:
+            #genggai
+            query_obj = query_obj.group_by(PostModel.highlight)
+        elif order_id == 3:
+            query_obj = query_obj.group_by(PostModel.highlight)
+
     else:
         query_obj = PostModel.query
     posts = query_obj.slice(start, end)
@@ -42,6 +77,7 @@ def index():
         'pagination':pagination
     }
     return render_template('front/front_index.html',**context)
+
 
 #注册视图函数
 class SignupView(views.MethodView):
@@ -63,12 +99,15 @@ class SignupView(views.MethodView):
             print('message:',message)
             return restful.params_error(message=message)
 
+
 #登录视图函数
 class LoginView(views.MethodView):
+
     def get(self):
         return_to = request.referrer
         current_url = request.url
         return render_template('front/front_login.html',return_to=return_to)
+
     def post(self):
         form = LoginForm(request.form)
         if form.validate():
@@ -89,6 +128,7 @@ class LoginView(views.MethodView):
 
         else:
             return restful.params_error(message=form.get_error())
+
 
 #注销视图函数
 @bp.route('/logout/')
@@ -115,7 +155,7 @@ def gene_captcha():
 def check_captcha():
     print('get captcha:',my_redis.get('captcha'))
     cap_val = request.args.get('cap_val')
-    if cap_val.lower() == my_redis.get('captcha').lower():
+    if cap_val.lower() == my_redis.get('captcha').decode('utf8').lower():
         return restful.success()
     else:
         return restful.params_error()

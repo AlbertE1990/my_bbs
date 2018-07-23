@@ -1,25 +1,23 @@
-{% extends "bootstrap/base.html" %}
-{% from 'common/_macors.html' import static,sweetalert_plugin%}
+{% extends "front/front_base.html" %}
 
 {% block title %}
 登录
 {% endblock %}
 
-{% block head %}
+{% block styles %}
     {{ super() }}
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    {{ sweetalert_plugin() }}
     <link rel="stylesheet" href="{{ static('front/css/sign_login.css') }}">
 {% endblock %}
 
 {% block scripts %}
   {{ super() }}
-  <script src="{{ static('common/js/myajax.js') }}"></script>
   <script src="{{ static('front/js/sign-login.js') }}"></script>
 {% endblock %}
 
-{% block body %}
-  {{ super() }}
+{% block navbar %}
+{% endblock %}
+
+{% block content %}
 
   <div class="outer-box">
       <div class="logo-box">
@@ -59,5 +57,6 @@
   {% if return_to %}
   <span style="display: none" id="return-to">{{ return_to }}</span>
   {% endif %}
-  <h2>current_user:{{ current_user.username }}</h2>
+  {{ current_user.username }}
+
 {% endblock %}

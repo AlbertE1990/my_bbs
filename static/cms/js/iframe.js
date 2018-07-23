@@ -1,8 +1,10 @@
 $(function () {
 
   //初始化iframe的高度
-  var iframe_body_heigth = $(document).height();
-  parent.$('iframe').height(iframe_body_heigth);
+
+  var parent_window_height = parent.window.innerHeight;
+  console.log('parent_window_height:'+parent_window_height);
+  parent.$('iframe').height(parent_window_height-156);
 
   //点击取消按钮执行函数
   function reset() {

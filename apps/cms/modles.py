@@ -7,11 +7,7 @@ from config import SECRET_KEY
 from flask import url_for
 from flask_login import UserMixin
 
-login_manager.login_view='cms.login'
 
-@login_manager.user_loader
-def load_user(user_id):
-    return CMSUser.query.get(user_id)
 
 class CMSUser(UserMixin,db.Model):
     __tablename__ = 'cms_user'

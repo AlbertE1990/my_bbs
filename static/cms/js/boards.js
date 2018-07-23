@@ -32,9 +32,9 @@ $(function () {
         }
 
         if (!name){
-            xtalert.alertInfoToast('请输入板块名称！')
+            parent.xtalert.alertInfoToast('请输入板块名称！')
         }else{
-            zlajax.post({
+            myajax.post({
                 'url':url,
                 'data':{
                     'name':name,
@@ -48,7 +48,7 @@ $(function () {
                     }
                 },
                 'fail':function () {
-                    xtalert.alertNetworkError()
+                    parent.xtalert.alertNetworkError()
                 }
             })
         }
@@ -72,7 +72,7 @@ $(function () {
         var tr = $(this).parent().parent();
         var id = tr.attr('data-id');
         var delete_board = function () {
-            zlajax.post({
+            myajax.post({
                 'url':'/cms/dboard/',
                 'data':{
                     'id':id

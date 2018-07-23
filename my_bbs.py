@@ -3,8 +3,8 @@ import config
 from apps.cms import bp as cms_bp
 from apps.front import bp as front_bp
 from flask_wtf import CSRFProtect
-from exts import db,mail,login_manager
-from flask_bootstrap import Bootstrap
+from exts import db,mail,login_manager,moment,bootstrap
+
 
 
 
@@ -17,9 +17,11 @@ def create_app():
     db.init_app(app)
     mail.init_app(app)
     CSRFProtect(app)
-    bootstrap = Bootstrap(app)
+    moment.init_app(app)
+    bootstrap.init_app(app)
     return app
 
 app = create_app()
+
 if __name__ == '__main__':
     app.run(port=8000)

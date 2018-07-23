@@ -1,20 +1,4 @@
-.main-container{
-    width:990px;
-    margin:0 auto;
-    overflow:hidden;
 
-}
-.lg-container{
-    width: 730px;
-    float: left;
-
-}
-
-.sm-container{
-    width: 250px;
-    float: right;
-    background: #fff;
-}
 .navbar-brand{
     background: url(../../common/images/mi-logo.png) no-repeat 50% 50%;
     width:55px;

@@ -1,10 +1,11 @@
 # -*- coding:utf-8 -*-
 from wtforms import Form,StringField,BooleanField,IntegerField
-from wtforms.validators import Email,Length,EqualTo,DataRequired,Regexp,ValidationError
+from wtforms.validators import Email,Length,EqualTo,DataRequired,Regexp,ValidationError,InputRequired
 import re
 from flask import g
 from utils import my_redis
 from .modles import CMSUser
+from apps.forms import BaseForm
 
 
 class LoginForm(Form):
@@ -69,3 +70,15 @@ class RegisterForm(Form):
         email = field.data
         if CMSUser.query.filter_by(email=email).first():
             raise ValidationError('该邮箱已经注册！')
+
+
+class AddBannerForm(BaseForm):
+    name = StringField(validators=[InputRequired(message='请输入轮播图片名称！')])
+    image_url = StringField(validators=[InputRequired(message='请输入轮播图片链接！')])
+    link_url = StringField(validators=[InputRequired(message='请输入轮播图片跳转链接！')])
+    priority = IntegerField(validators=[InputRequired(message='请输入轮播图片优先级！')])
+    id = StringField()
+
+class AddBoardForm(BaseForm):
+    name = StringField(validators=[InputRequired('请输入板块名称！')])
+    id = StringField()
