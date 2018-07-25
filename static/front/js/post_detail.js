@@ -2,16 +2,16 @@ $(function(){
     var replyE = $('#reply');
     var submit = $('.submit-btn button');
     submit.click(function () {
-        var user_id = replyE.attr('data_author');
+        var user_id = replyE.attr('data-author');
         if (!user_id){
             xtalert.alertError('请先登录！');
             return false
         }
-        var post_id = replyE.attr('data_post');
+        var post_id = replyE.attr('data-post');
         var content = replyE.val();
 
 
-        zlajax.post({
+        myajax.post({
             'url':'/acomment/',
             'data':{
                 'author_id':user_id,

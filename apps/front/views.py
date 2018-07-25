@@ -1,47 +1,17 @@
-from flask import  Blueprint,views,render_template,url_for,make_response,g,request,session,redirect,abort
+from flask import  Blueprint,views,render_template,url_for,make_response,g,request,session,redirect,abort,flash
 from utils.captcha import Captcha
 from utils import my_redis,restful
-from .forms import SignupForm,LoginForm,AddPostForm,AddCommentForm
+from .forms import SignupForm,LoginForm,AddPostForm,AddCommentForm,PasswordResetRequestForm,PasswordResetForm
 from .models import FrontUser
-from exts import db,login_manager
+from exts import db,login_manager,mail
 from .decorators import login_required
 from config import FRONT_USER_ID,PER_PAGE
 from ..models import BannerModel,BoardModel,PostModel,CommentModel
 from io import BytesIO
 from flask_paginate import Pagination,get_page_parameter
+from apps.email import send_email
 
 bp = Blueprint('front',__name__)
-
-
-#ajax
-@bp.route('/test')
-def test():
-    board_id = request.args.get('bd', type=int, default=None)
-    page = request.args.get(get_page_parameter(), type=int, default=1)
-    start = (page - 1) * PER_PAGE
-    end = start + PER_PAGE
-    banners = BannerModel.query.order_by(BannerModel.priority.desc()).limit(4)
-    boards = BoardModel.query.all()
-
-    if board_id:
-        query_obj = PostModel.query.filter_by(board_id=board_id)
-    else:
-        query_obj = PostModel.query
-    posts = query_obj.slice(start, end)
-    total = query_obj.count()
-    pagination = Pagination(page=page, total=total, bs_version=3)
-
-    context = {
-        'banners': banners,
-        'boards': boards,
-        'posts': posts,
-        'pagination': pagination
-    }
-
-
-    doc = render_template('front/front_index.html',**context)
-
-
 
 #首页视图函数
 @bp.route('/')
@@ -130,12 +100,52 @@ class LoginView(views.MethodView):
             return restful.params_error(message=form.get_error())
 
 
+#重置密码验证邮箱
+class ResetPwdView(views.MethodView):
+
+    def get(self):
+        form = PasswordResetRequestForm()
+        return render_template('front/front_resetpwd.html', form=form)
+
+    def post(self):
+        form = PasswordResetRequestForm(request.form)
+        if form.validate:
+            email = form.email.data
+            user = FrontUser.query.filter_by(email=email).first()
+            if user:
+                token = user.generate_reset_token()
+                print(token)
+                send_email(user.email, '重置密码',
+                           'email/reset_password',
+                           user=user, token=token)
+                flash('重置密码链接已发送到你邮箱，请注意查收')
+            else:
+                flash('该邮箱不存在')
+        return redirect(url_for('.resetpwd'))
+
+
+#重置密码
+@bp.route('/resetpwd/<token>',methods=['GET', 'POST'])
+def password_reset(token):
+    form = PasswordResetForm()
+    if form.validate_on_submit():
+        new_password = form.password.data
+        if FrontUser.reset_password(token,new_password):
+            db.session.commit()
+            flash('密码重置成功')
+            return redirect(url_for('.login'))
+        else:
+            flash('链接失效，请获取新链接')
+    return render_template('front/front_resetpwd.html',form=form)
+
+
 #注销视图函数
 @bp.route('/logout/')
 @login_required
 def logout():
    session.clear()
    return redirect(url_for('front.index'))
+
 
 #生成验证码
 @bp.route('/captcha/')
@@ -150,6 +160,7 @@ def gene_captcha():
     resp.content_type = 'image/png'
     return resp
 
+
 #检测验证码
 @bp.route('/captcha/check/')
 def check_captcha():
@@ -159,6 +170,7 @@ def check_captcha():
         return restful.success()
     else:
         return restful.params_error()
+
 
 #添加帖子视图函数
 class ApostView(views.MethodView):
@@ -181,19 +193,29 @@ class ApostView(views.MethodView):
         else:
             return restful.params_error(form.get_error())
 
+
 #帖子详情页面
 @bp.route('/p/<post_id>')
 def post_detail(post_id):
     post = PostModel.query.get(post_id)
+    page = request.args.get(get_page_parameter(), type=int, default=1)
+    start = (page - 1) * PER_PAGE
+    end = start + PER_PAGE
+
     if post:
-        comments = CommentModel.query.filter(CommentModel.post_id == post_id).order_by(CommentModel.create_time.desc())
+        query_obj = CommentModel.query.filter(CommentModel.post_id == post_id).order_by(CommentModel.create_time.desc())
+        comments = query_obj.slice(start, end)
+        total = query_obj.count()
+        pagination = Pagination(page=page, total=total, bs_version=3)
         context = {
             'post':post,
-            'comments':comments
+            'comments':comments,
+            'pagination':pagination
         }
         return render_template('front/front_post_detail.html',**context)
     else:
         abort(404)
+
 
 #发表评论
 @bp.route('/acomment/',methods=['Post'])
@@ -204,9 +226,6 @@ def add_comment():
         content = form.content.data
         post_id = form.post_id.data
         author_id = form.author_id.data
-        print('comment content:',content)
-        print('post id:',post_id)
-        print('comment author id:',author_id)
         comment = CommentModel(content=content,post_id=post_id,author_id=author_id)
         db.session.add(comment)
         db.session.commit()
@@ -222,4 +241,5 @@ def add_comment():
 bp.add_url_rule('/signup/',view_func=SignupView.as_view('signup'))
 bp.add_url_rule('/login/',view_func=LoginView.as_view('login'))
 bp.add_url_rule('/apost/',view_func=ApostView.as_view('apost'))
+bp.add_url_rule('/resetpwd/',view_func=ResetPwdView.as_view('resetpwd'))
 

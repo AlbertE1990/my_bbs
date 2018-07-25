@@ -1,10 +1,23 @@
 $(function () {
 
   //初始化iframe的高度
+  function init_iframe_height(){
+    var parent_window_height = parent.window.innerHeight;
+    var html_height = $('html').height();
+    console.log('执行 init_iframe_height');
+    console.log('html_height:'+html_height);
+    console.log('parent_window_height:'+parent_window_height);
 
-  var parent_window_height = parent.window.innerHeight;
-  console.log('parent_window_height:'+parent_window_height);
-  parent.$('iframe').height(parent_window_height-156);
+    if (parent_window_height-162 > html_height){
+       parent.$('iframe').height(parent_window_height-162);
+    }else{
+      parent.$('iframe').height(html_height);
+    };
+
+
+  };
+
+  init_iframe_height();
 
   //点击取消按钮执行函数
   function reset() {

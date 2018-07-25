@@ -1,8 +1,10 @@
 from exts import db
+from flask import current_app
 import shortuuid
 import enum
 from datetime import datetime
 from werkzeug.security import generate_password_hash,check_password_hash
+from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 
 class GenderEnum(enum.Enum):
     MALE = 1
@@ -42,5 +44,23 @@ class FrontUser(db.Model):
 
     def check_password(self,rawpassword):
         return check_password_hash(self._password,rawpassword)
+
+    def generate_reset_token(self,expiration=3600):
+        s = Serializer(current_app.config['SECRET_KEY'],expiration)
+        return s.dumps({'reset': self.id}).decode('utf-8')
+
+    @staticmethod
+    def reset_password(token,new_password):
+        s = Serializer(current_app.config['SECRET_KEY'])
+        try:
+            data = s.loads(token.encode('utf-8'))
+        except:
+            return False
+        user = FrontUser.query.get(data.get('reset'))
+        if not user:
+            return False
+        user.password = new_password
+        db.session.add(user)
+        return True
 
 

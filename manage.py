@@ -4,7 +4,7 @@ from exts import db
 from my_bbs import app
 from flask_script import Manager,Shell
 from apps.cms.modles import CMSUser,CMSRole,CMSPermission,CmsRoleUser
-from random import choice
+from random import choice,randint
 import json
 
 
@@ -52,7 +52,19 @@ def create_role():
 
 
 def make_shell_context():
-    return dict(app=app, db=db, CMSUser=CMSUser, CMSRole=CMSRole,CmsRoleUser=CmsRoleUser,CMSPermission=CMSPermission)
+
+    context = dict(app=app,
+                   db=db,
+                   CMSUser=CMSUser,
+                   CMSRole=CMSRole,
+                   CmsRoleUser=CmsRoleUser,
+                   CMSPermission=CMSPermission,
+                   PostModel=PostModel,
+                   CommentModel=CommentModel,
+                   FrontUser = FrontUser
+    )
+
+    return context
 
 manager.add_command("shell", Shell(make_context=make_shell_context))
 
@@ -69,7 +81,8 @@ from apps.models import PostModel,CommentModel,BoardModel
 
 fake = Faker(locale='zh_CN')
 
-@manager.command
+
+@manager.option('-c','--count',dest='count')
 def front_users(count=30):
     i = 0
     while i < count:
@@ -90,7 +103,8 @@ def front_users(count=30):
             db.session.rollback()
     return '前端用户数据生成成功！'
 
-@manager.command
+
+@manager.option('-c','--count',dest='count')
 def posts(count=100):
 
     for i in range(count):
@@ -107,6 +121,7 @@ def posts(count=100):
     db.session.commit()
     return '帖子数据生成成功！'
 
+
 @manager.command
 def change_avatar():
     with open('avatar.json', 'r',encoding='utf-8') as f:
@@ -122,6 +137,23 @@ def change_avatar():
             pass
     print('成功！')
 
+
+@manager.command
+def comments():
+    posts = PostModel.query.all()
+    authors = FrontUser.query.all()
+    for post in posts:
+        count = randint(1,200)
+        for i in range(count-1):
+            comment = CommentModel(
+                content = fake.text(),
+                create_time = fake.past_datetime(),
+                post_id = post.id,
+                author_id= choice(authors).id
+            )
+            db.session.add(comment)
+        db.session.commit()
+    print('评论生成成功！')
 
 if __name__ == '__main__':
     manager.run()

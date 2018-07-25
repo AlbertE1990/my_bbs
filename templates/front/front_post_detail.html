@@ -18,85 +18,92 @@
     <div class="row">
       <!-- 左边帖子详情-->
       <div class="col-md-9">
-          <!-- 帖子主题内容-->
-          <div class="post-container box">
-              <div class="post-head-group">
-                  <h3 class="title">{{ post.title }}</h3>
-                  <div class="post-info">
-                      <span>作者：{{ post.author.username }}</span>
-                      <span>所属板块：{{ post.board.name }}</span>
-                      <span>发布时间：{{ post.create_time }}</span>
-                      <span>评论：0</span>
-                      <span>阅读：0</span>
-                  </div>
-              </div>
-              <div class="post-content">
-                  {{ post.content|safe }}
-              </div>
-              <!-- 帖子快速评论-->
-              <div class="faster-reply-group">
-                  <div class="row reply-top">
-                      <div class="col-sm-1">
-                          <a  class=""  href="#" target="_blank" >
-                    <img class="img-circle" src="http://s1.bbs.xiaomi.cn/statics/images/noavatar_small.gif">
-                  </a>
-                      </div>
-                      <div class="col-sm-9">
-                          {% if user %}
-                          <textarea  data-author="{{ user.id }}" data-post="{{ post.id }}"  class="form-control" id="reply"  placeholder="说说你的看法" ></textarea>
-                          {% else %}
-                              <textarea   data-post="{{ post.id }}"  class="form-control" id="reply"  placeholder="说说你的看法" ></textarea>
-                          {% endif %}
-                      </div>
-                      <div class="col-sm-2 submit-btn">
-                  <button class="btn btn-warning" >立即发表</button>
-                      </div>
-                  </div>
-              </div>
+        <!-- 帖子主题内容-->
+        <div class="post-container box">
+          <div class="post-head-group">
+            <h3 class="title">{{ post.title }}</h3>
+            <div class="post-info">
+              <span>作者：{{ post.author.username }}</span>
+              <span>所属板块：{{ post.board.name }}</span>
+              <span>发布时间：{{ post.create_time }}</span>
+              <span>评论：0</span>
+              <span>阅读：0</span>
+            </div>
           </div>
+          <div class="post-content">
+            {{ post.content|safe }}
+          </div>
+          <!-- 帖子快速评论-->
+          <div class="faster-reply-group">
+            <div class="row reply-top">
+              <div class="col-sm-1">
+                <a  class=""  href="#" target="_blank" >
+                  <img class="img-circle" height="50px" src="{{ user.avatar|default('http://s1.bbs.xiaomi.cn/statics/images/noavatar_small.gif')}}">
+                </a>
+              </div>
+              <div class="col-sm-9">
+                {% if user %}
+                  <textarea  data-author="{{ user.id }}" data-post="{{ post.id }}"  class="form-control" id="reply"  placeholder="说说你的看法" ></textarea>
+                {% else %}
+                  <textarea   data-post="{{ post.id }}"  class="form-control" id="reply"  placeholder="说说你的看法" ></textarea>
+                {% endif %}
+              </div>
+              <div class="col-sm-2 submit-btn">
+                <button class="btn btn-warning" >立即发表</button>
+              </div>
+            </div>
+          </div>
+        </div>
 
-          <!-- 帖子评论区-->
-          <div class="post-comments">
-               <ul class="post-comment-group">
-              {% for comment in comments %}
-                  <li class="post-comment">
-                  <div class="row">
-                      <div class="author-avatar-group col-sm-2">
-                          <img class="img-circle" src="{{ comment.author.avatar or static('common/images/avatar.jpg') }}" alt="">
-                      </div>
-                      <div class="comment-group col-sm-10">
-                          <div class="comment-info">
-                              <span class="comment-author">{{ comment.author.username }}</span>
-
-                              <span>发表于：{{ comment.create_time }}</span>
-
-                              <span>来自</span>
-                          </div>
-                          <div class="comment-cotent">
-                              <h4>{{ comment.content }}</h4>
-                          </div>
-                      </div>
+        <!-- 帖子评论区-->
+        <div class="post-comments">
+          <ul class="post-comment-group">
+            {% for comment in comments %}
+              <li class="post-comment">
+                <div class="row">
+                  <div class="author-avatar-group col-sm-2">
+                    <img class="img-circle" src="{{ comment.author.avatar or static('common/images/avatar.jpg') }}" alt="">
                   </div>
-                  </li>
-              {% endfor %}
+                  <div class="comment-group col-sm-10">
+                    <div class="comment-info">
+                      <span class="comment-author">{{ comment.author.username }}</span>
+
+                      <span>发表于：{{ comment.create_time }}</span>
+
+                      <span>来自</span>
+                    </div>
+                    <div class="comment-cotent">
+                      {% if not comment.disabled %}
+                        <h4>{{ comment.content }}</h4>
+                      {% else %}
+                        <h4 calss="text-warning" style="color:red">该评论已经被删除！</h4>
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+              </li>
+            {% endfor %}
           </ul>
-
+          <div class="text-center">
+            {{ pagination.links }}
           </div>
+
+        </div>
 
       </div>
       <!-- 右边作者介绍详情-->
       <div class="col-md-3">
-          <div class="author-info-group box">
-              <div class="author-avatar">
-                  <img class="img-circle" style="width: 100px;height: 100px;" src="{{ post.author.avatar|default(static('front/mt.jpg'),boolean=True) }}" alt="">
-                  <div class="author-msg">
-                      <span>{{ post.author.username }}</span>
-                  </div>
-                  <a href="#" class="btn btn-warning">他的主页</a>
-
-              </div>
+        <div class="author-info-group box">
+          <div class="author-avatar">
+            <img class="img-circle" style="width: 100px;height: 100px;" src="{{ post.author.avatar|default(static('front/mt.jpg'),boolean=True) }}" alt="">
+            <div class="author-msg">
+              <span>{{ post.author.username }}</span>
+            </div>
+            <a href="#" class="btn btn-warning">他的主页</a>
 
           </div>
+
+        </div>
 
       </div>
     </div>

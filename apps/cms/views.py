@@ -9,7 +9,8 @@ from exts import db,mail,login_manager
 import string
 import random
 from flask_mail import Message
-from flask_login import login_required,login_user,logout_user
+from apps.email import send_email
+from flask_login import login_required,login_user,logout_user,current_user
 import os
 from apps.models import BoardModel,PostModel,HighlightPostModel,BannerModel
 from flask_paginate import get_page_parameter,Pagination
@@ -19,10 +20,10 @@ bp = Blueprint('cms',__name__,url_prefix='/cms')
 
 base_path = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 
+
 @login_manager.user_loader
 def load_user(user_id):
     return CMSUser.query.get(user_id)
-
 
 
 @bp.route('/')
@@ -152,6 +153,7 @@ class ResetEmailView(MethodView):
 @bp.route('/email_captcha/')
 @login_required
 def email_captcha():
+
     email = request.args.get('email')
     validate_res = validate_email(email)
     if not validate_res['flag']:
@@ -159,13 +161,10 @@ def email_captcha():
 
     source = list(string.ascii_lowercase) + list(string.digits)
     captcha = "".join(random.sample(source, 6))
-    body = '您的验证码是：%s,验证码有效期为5分钟' % captcha
-    message = Message('CMS管理后台邮件发送', recipients=[email], body=body)
-    my_redis.set(email,captcha,ex=300)
-    print('生成的验证码',captcha)
-
     try:
-        mail.send(message=message)
+        send_email()
+        my_redis.set(email, subject='CMS系统修改邮箱验证码',template='email/cms_change_email',captcha=captcha, user=current_user,ex=300)
+        print('生成的验证码', captcha)
     except:
         return restful.server_error()
     return restful.success(message="邮件发送成功请注意查收！")
@@ -407,8 +406,20 @@ def dbanners():
 @bp.route('/fusers/',methods=['GET'])
 @login_required
 def fusers():
-    users = FrontUser.query.all()
-    return render_template('cms/cms_frontuser_manage.html',users=users)
+
+    page = request.args.get(get_page_parameter(), type=int, default=1)
+    PER_PAGE = current_app.config['CMS_PER_PAGE']
+    start = (page - 1) * PER_PAGE
+    end = start + PER_PAGE
+    query_obj = FrontUser.query.order_by(FrontUser.join_time.desc())
+    users = query_obj.slice(start, end)
+    total = query_obj.count()
+    pagination = Pagination(page=page, total=total, bs_version=3)
+    context = {
+        'users': users,
+        'pagination': pagination
+    }
+    return render_template('cms/cms_frontuser_manage.html',**context)
 
 
 

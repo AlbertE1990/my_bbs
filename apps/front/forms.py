@@ -1,8 +1,9 @@
 from apps.forms import BaseForm
-from wtforms import StringField,BooleanField,IntegerField
-from wtforms.validators import Regexp,InputRequired,EqualTo,Length,ValidationError
+from flask_wtf import FlaskForm
+from wtforms import StringField,BooleanField,IntegerField,SubmitField,PasswordField
+from wtforms.validators import Regexp,InputRequired,EqualTo,Length,ValidationError,Email
 from utils import my_redis
-
+from .models import FrontUser
 class SignupForm(BaseForm):
     telephone = StringField(validators=[Regexp(r"1[345789]\d{9}",message='请输入正确的手机号码！')])
     username = StringField(validators=[Length(min=2,max=20,message='用户名长度为2-20个字符！')])
@@ -43,3 +44,16 @@ class AddCommentForm(BaseForm):
     content = StringField(validators=[InputRequired(message='请输入内容！')])
     post_id = IntegerField(validators=[InputRequired(message='系统没有获取到帖子ID！')])
     author_id = StringField(validators=[InputRequired(message='系统没有获取到用户ID不！')])
+
+
+#重置密码验证邮箱
+class PasswordResetRequestForm(FlaskForm):
+    email = StringField('电子邮箱：',validators=[Email(message='请输入正确的电子邮箱！'),InputRequired()])
+    submit = SubmitField('点击验证')
+
+
+#
+class PasswordResetForm(FlaskForm):
+    password = PasswordField('新密码：', validators=[InputRequired(), EqualTo('password2', message='两次密码不相等！'),Length(min=6,message='密码长度必须不小于6!')])
+    password2 = PasswordField('再次确认', validators=[InputRequired()])
+    submit = SubmitField('重置密码')
