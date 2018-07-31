@@ -1,0 +1,126 @@
+{% extends "cms/base.html" %}
+{% block scripts %}
+    {{ super() }}
+    <script type="text/javascript" src={{ static('cms/js/smooth-sliding-menu.js') }}></script>
+    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="{{ static('cms/assets/js/html5shiv.js')}}"></script>
+      <script src="{{ static('assets/js/respond.min.js')}}"></script>
+    <![endif]-->
+    <script src={{ static('common/js/myajax.js') }}></script>
+    <script src={{ static('cms/js/main.js') }}></script>
+    <script src="{{ static("common/js/sweetalert.min.js") }}"></script>
+    <script src="{{ static("common/js/xtalert.js") }}"></script>
+{% endblock %}
+
+{% block styles %}
+    {{ super() }}
+    <link href="{{ static('cms/css/cms_base.css') }}" rel="stylesheet">
+    <link rel="stylesheet" href={{ static('common/css/sweetalert.css') }}>
+{% endblock %}
+
+{% block title %}
+    CMS后台管理系统
+{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <div class="top-navbar header b-b"><a data-original-title="Toggle navigation" class="toggle-side-nav pull-left"
+                                              href="javascript:void(0)"><i class="icon-reorder"></i> </a>
+            <div class="brand pull-left"><a href={{ url_for('cms.index') }}><img src="{{ static('cms/images/logo.png') }}" width="147"
+                                                                                 height="33"></a></div>
+            <ul class="nav navbar-nav navbar-right  hidden-xs">
+                <li class="dropdown user  hidden-xs"><a data-toggle="dropdown" class="dropdown-toggle"
+                                                        href="javascript:void(0)"> <i class="icon-male"></i> <span
+                        class="username">{{ current_user.username }}</span> <i class="icon-caret-down small"></i> </a>
+                    <ul class="dropdown-menu">
+                        <li><a href="javascript:void(0)"><i class="icon-user"></i> 个人信息</a></li>
+
+                        <li class="divider"></li>
+                        <li><a href={{ url_for('cms.logout') }}><i class="icon-key"></i> 注销账户</a></li>
+                    </ul>
+                </li>
+            </ul>
+            <form class="pull-right">
+                <input type="search" placeholder="Search..." class="search" id="search-input">
+            </form>
+        </div>
+    </div>
+    <div class="wrapper">
+        <div class="left-nav">
+            <div id="side-nav">
+                <ul id="nav">
+                    <li><a href={{ url_for('cms.index') }}> <i class="icon-dashboard"></i> 首页 </a></li>
+                    <li><a href="javascript:void(0)"> <i class="icon-desktop"></i> 个人中心 <i class="arrow icon-angle-left"></i></a>
+                        <ul class="sub-menu">
+                            <li id="profile-iframe" data-src="{{ url_for('cms.profile') }}"><a href='javascript:void(0)'> <i
+                                    class="icon-angle-right"></i> 个人信息 </a></li>
+                            <li data-src="/cms/resetpwd"><a href='javascript:void(0)'> <i class="icon-angle-right"></i> 修改密码 </a></li>
+                            <li data-src="/cms/resetemail"><a href='javascript:void(0)'> <i class="icon-angle-right"></i> 修改邮箱</a></li>
+                            <li data-src="https://www.baidu.com"> <a href="javascript:void(0)"> <i class="icon-angle-right"></i> 百度</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="javascript:void(0)"> <i class="icon-edit"></i> 论坛管理 <i class="arrow icon-angle-left"></i></a>
+                        <ul class="sub-menu">
+                            {% if current_user.has_permission(CMSPermission.BOARDER) %}
+                                <li data-src={{ url_for('cms.boards') }}><a href="javascript:void(0)"> <i class="icon-angle-right"></i> 版块管理 </a></li>
+                            {% endif %}
+                            {% if current_user.has_permission(CMSPermission.POSTER) %}
+                                <li data-src={{ url_for('cms.posts') }}><a href="javascript:void(0)"> <i class="icon-angle-right"></i> 帖子管理</a></li>
+                            {% endif  %}
+                            {% if current_user.has_permission(CMSPermission.COMMENTER) %}
+                                <li data-src={{ url_for('cms.comments') }}><a href="javascript:void(0)"> <i class="icon-angle-right"></i> 评论管理 </a></li>
+                            {% endif %}
+                            {% if current_user.has_permission(CMSPermission.BOARDER)  %}
+                                <li data-src={{ url_for('cms.banners') }}><a href="javascript:void(0)"> <i class="icon-angle-right"></i> 轮播图管理 </a></li>
+                            {% endif %}
+
+                        </ul>
+                    </li>
+
+                    <li><a href="javascript:void(0)"> <i class="icon-flag"></i> 前台用户管理 <i class="arrow icon-angle-left"></i></a>
+                        <ul class="sub-menu">
+                            {% if current_user.has_permission(CMSPermission.FRONTUSER) %}
+                                <li data-src={{ url_for('cms.fusers')}} ><a href="javascript:void(0)"> <i class="icon-angle-right"></i> 前台用户管理 </a></li>
+                            {% endif %}
+                        </ul>
+                    </li>
+                    <li><a href="javascript:void(0)"> <i class="icon-picture"></i> 权限管理 <i class="arrow icon-angle-left"></i></a>
+                        <ul class="sub-menu">
+                            {% if current_user.has_permission(CMSPermission.CMSUSER) %}
+                                <li><a href="javascript:void(0)"> <i class="icon-angle-right"></i> CMS用户权限管理 </a></li>
+                            {% endif %}
+                        </ul>
+                    </li>
+
+                    <li><a href="javascript:void(0)"> <i class="icon-time"></i> CMS用户管理 <i class="arrow icon-angle-left"></i></a>
+                        <ul class="sub-menu">
+                            {% if current_user.has_permission(CMSPermission.CMSUSER) %}
+                                <li data-src={{ url_for('cms.cms_users') }}><a href="javascript:void(0)"> <i class="icon-angle-right"></i> CMS用户管理 </a></li>
+                            {% endif %}
+                        </ul>
+                    </li>
+                    <li><a href="javascript:void(0)"> <i class="icon-folder-open-alt"></i> CMS组管理 <i
+                            class="arrow icon-angle-left"></i></a>
+                        <ul class="sub-menu">
+                            {% if current_user.has_permission(CMSPermission.ADMINER) %}
+                                <li><a href="javascript:void(0)"> <i class="icon-angle-right"></i> CMS组管理 </a></li>
+                            {% endif %}
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="page-content">
+            <iframe frameborder="0" name="icms"></iframe>
+        </div>
+    </div>
+    <div class="bottom-nav footer"> 2013 &copy; Thin Admin by Riaxe Systems.</div>
+
+{% endblock %}
+
+
+
+
+

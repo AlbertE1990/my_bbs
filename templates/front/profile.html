@@ -1,0 +1,113 @@
+{% extends 'front/front_base.html' %}
+{% block title %}首页{% endblock %}
+{% block styles %}
+  {{ super() }}
+  <link rel="stylesheet" href="{{ static('front/css/profile.css') }}">
+{% endblock %}
+
+{% block scripts %}
+  {{ super() }}
+  <script src="{{ static('front/js/profile.js') }}"></script>
+  {{ moment.include_moment() }}
+  <!--使用中文,默认是英语的-->
+  　{{ moment.lang("zh-CN") }}
+{% endblock %}
+
+{% block content %}
+  <div class="container">
+    <div class="row top">
+      <div class="col-md-3 ">
+        <img class="img-circle avatar" src="{{ cuser.avatar }}" onerror="javascript:this.src='http://s1.bbs.xiaomi.cn/statics/images/noavatar_small.gif';">
+      </div>
+      <div class="col-md-9">
+        <div class="info">
+          <h2><strong class="username" >{{ cuser.username }}</strong></h2>
+        </div>
+        <div class="score">
+          <dl>
+            <dt>
+              <span class="num">LV.1</span>
+            </dt>
+            <dd>VIP等级</dd>
+          </dl>
+          <dl>
+            <dt>
+              <span class="num">390</span>
+            </dt>
+            <dd>贡献值</dd>
+          </dl>
+          <dl>
+            <dt>
+              <span class="num">408476</span>
+            </dt>
+            <dd>第多少位VIP</dd>
+          </dl>
+
+        </div>
+
+      </div>
+
+    </div>
+
+    <div class="row">
+      <div class="col-md-3 ">
+        <div class="nav_menu box">
+          <h4>个人资料</h4>
+          <div class="nav_label" style="top: 101px;"><span></span></div>
+          <ul class="menu">
+            <li class="menu_item current"><a href="javascript:void(0)">资料</a></li>
+            <li class="menu_item "><a href="{{ url_for('.bookmark',uid=cuser.id) }}">我的收藏</a></li>
+            <li class="menu_item "><a href="{{ url_for('.myposts',uid=cuser.id) }}">我的帖子</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="col-md-9">
+        <div class="contain_right box">
+          <div class="session">
+            <div class="wrap lively">
+              <h2>活跃概况</h2>
+              <ul class="clearfix">
+                <li><span class="name">主题</span><span class="num">0</span></li>
+                <li><span class="name">回复</span><span class="num">1</span></li>
+                <li><span class="name">经验</span><span class="num">369</span></li>
+                <li><span class="name">贡献值</span><span class="num">390</span></li>
+              </ul>
+              <p>个人签名:<span class="name"></span></p>
+
+            </div>
+            <div class="">
+              <h2>个人信息</h2>
+              <table class="table table-hover">
+                <tr>
+                  <td>真实姓名:</td>
+                  <td>{{ cuser.realname }}</td>
+                </tr>
+                <tr>
+                  <td>手机：</td>
+                  <td>{{ cuser.telephone }}</td>
+                </tr>
+                <tr>
+                  <td>邮箱:</td>
+                  <td>{{ cuser.email }}</td>
+                </tr>
+                <tr>
+                  <td>注册时间</td>
+                  <td>{{ cuser.join_time }}</td>
+                </tr>
+                <tr>
+                  <td>性别:</td>
+                  <td>{{ cuser.gender }}</td>
+                </tr>
+
+              </table>
+            </div>
+
+
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+{% endblock %}

@@ -4,7 +4,7 @@
 
 {% block styles %}
   {{ super() }}
-  <link rel="stylesheet" href="{{ static('front/css/front_index.css') }}">
+  <link rel="stylesheet" href="{{ static('front/css/post_detail.css') }}">
 {% endblock %}
 
 {% block scripts %}
@@ -26,19 +26,34 @@
               <span>作者：{{ post.author.username }}</span>
               <span>所属板块：{{ post.board.name }}</span>
               <span>发布时间：{{ post.create_time }}</span>
-              <span>评论：0</span>
-              <span>阅读：0</span>
+              <span>评论：{{ post.comments|length }}</span>
+              <span>阅读：{{ post |read_count }}</span>
+              <a href="javascript:void(0)">
+                {% if not user or post not in user.bookmark %}
+                <span class="glyphicon glyphicon-star-empty " data-book="book" title="收藏该帖"></span>
+                {% else %}
+                <span class="glyphicon glyphicon-star" data-book="unbook" title="取消收藏"></span>
+                {% endif %}
+              </a>
+
+
             </div>
           </div>
+          <hr/>
           <div class="post-content">
             {{ post.content|safe }}
           </div>
+          <hr/>
           <!-- 帖子快速评论-->
           <div class="faster-reply-group">
             <div class="row reply-top">
               <div class="col-sm-1">
                 <a  class=""  href="#" target="_blank" >
-                  <img class="img-circle" height="50px" src="{{ user.avatar|default('http://s1.bbs.xiaomi.cn/statics/images/noavatar_small.gif')}}">
+                  {% if user %}
+                  <img class="img-circle" height="50px" src="{{ user.get_avatar()}}">
+                  {% else %}
+                  <img class="img-circle" height="50px" src="http://s1.bbs.xiaomi.cn/statics/images/noavatar_small.gif">
+                  {% endif %}
                 </a>
               </div>
               <div class="col-sm-9">
@@ -56,15 +71,15 @@
         </div>
 
         <!-- 帖子评论区-->
-        <div class="post-comments">
+        <div class="post-comments box">
           <ul class="post-comment-group">
             {% for comment in comments %}
-              <li class="post-comment">
+              <li class="post-comment ">
                 <div class="row">
-                  <div class="author-avatar-group col-sm-2">
-                    <img class="img-circle" src="{{ comment.author.avatar or static('common/images/avatar.jpg') }}" alt="">
+                  <div class="author-avatar-group col-sm-1">
+                    <img class="img-circle" src="{{ comment.author.get_avatar() or static('common/images/avatar.jpg') }}" alt="">
                   </div>
-                  <div class="comment-group col-sm-10">
+                  <div class="comment-group col-sm-11">
                     <div class="comment-info">
                       <span class="comment-author">{{ comment.author.username }}</span>
 
@@ -99,7 +114,8 @@
             <div class="author-msg">
               <span>{{ post.author.username }}</span>
             </div>
-            <a href="#" class="btn btn-warning">他的主页</a>
+            <a href="{{ url_for('.profile',uid=post.author.id) }}" class="btn btn-warning">他的主页</a>
+            <a href="{{ url_for('.profile',uid=post.author.id) }}" class="btn btn-warning">关注他</a>
 
           </div>
 

@@ -1,26 +1,6 @@
-{% from "common/_macors.html" import static,bootstrap_plugin %}
-{% set user = g.user %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>评论管理</title>
-  <meta name="csrf_token" content="{{ csrf_token() }}" >
-  {{ bootstrap_plugin() }}
-
-  <link href={{ static('cms/css/thin-admin.css') }} rel="stylesheet" media="screen">
-  <link href={{ static('cms/css/font-awesome.css') }} rel="stylesheet" media="screen">
-  <link href={{ static('cms/style/style.css') }} rel="stylesheet" media="screen">
-  <link href={{ static('cms/style/nestable.css') }} rel="stylesheet" media="screen">
-  <script src={{ static('cms/js/iframe.js') }}></script>
-  <script src={{ static('common/js/myajax.js') }}></script>
-  <link rel="stylesheet" href={{ static('cms/css/iframe.css') }}>
-  <link href="{{ static('cms/css/font-awesome.css') }}" rel="stylesheet" media="screen">
-  <link href="{{ static('cms/style/style.css') }}" rel="stylesheet">
-  <script src={{ static('cms/js/banners.js') }}></script>
-</head>
-<body>
-
+{% extends "cms/iframe_base.html" %}
+{% block title %}轮播图管理{% endblock %}
+{% block content %}
 <div class="content container" >
   <h1>轮播图管理</h1>
   <div class="top-box">
@@ -100,5 +80,4 @@
       </div>
   </div>
 </div>
-</body>
-</html>
+{% endblock %}

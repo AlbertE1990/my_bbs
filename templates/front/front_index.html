@@ -65,7 +65,6 @@
       </div>
     </div>
     <div class="row">
-
       <div class="col-md-9 ">
         <!-- 帖子列表-->
         <div class="post-group box">
@@ -90,8 +89,8 @@
                       <span>作者：{{ post.author.username }}</span>
                       <span>所属板块：{{ post.board.name }}</span>
                       <span>发布时间：{{ moment(post.create_time).fromNow() }}</span>
-                      <span>评论：0</span>
-                      <span>阅读：0</span>
+                      <span>评论：{{ post.comments|length }}</span>
+                      <span>阅读：{{ post|read_count }}</span>
                     </div>
                   </div>
                 </li>

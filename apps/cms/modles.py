@@ -66,6 +66,7 @@ class CMSUserDetail(db.Model):
                 avatar_img = url_for('static', filename='cms/images/d1.png')
             else:avatar_img = url_for('static', filename='cms/images/d0.png')
             return avatar_img
+
     @avatar.setter
     def avatar(self,avatar_img):
         self._avatar = avatar_img

@@ -1,0 +1,91 @@
+{% extends 'front/front_base.html' %}
+{% block title %}首页{% endblock %}
+{% block styles %}
+  {{ super() }}
+  <link rel="stylesheet" href="{{ static('front/css/profile.css') }}">
+{% endblock %}
+
+{% block scripts %}
+  {{ super() }}
+  <script src="{{ static('front/js/profile.js') }}"></script>
+  {{ moment.include_moment() }}
+  <!--使用中文,默认是英语的-->
+  　{{ moment.lang("zh-CN") }}
+{% endblock %}
+
+{% block content %}
+  <div class="container">
+    <div class="row top">
+      <div class="col-md-3 ">
+        <img class="img-circle avatar" src="{{ cuser.get_avatar() }}" onerror="javascript:this.src='http://s1.bbs.xiaomi.cn/statics/images/noavatar_small.gif';">
+      </div>
+      <div class="col-md-9">
+        <div class="info">
+          <h2><strong class="username" >{{ cuser.username }}</strong></h2>
+        </div>
+        <div class="score">
+          <dl>
+            <dt>
+              <span class="num">LV.1</span>
+            </dt>
+            <dd>VIP等级</dd>
+          </dl>
+          <dl>
+            <dt>
+              <span class="num">390</span>
+            </dt>
+            <dd>贡献值</dd>
+          </dl>
+          <dl>
+            <dt>
+              <span class="num">408476</span>
+            </dt>
+            <dd>第多少位VIP</dd>
+          </dl>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="row">
+      <div class="col-md-3 ">
+        <div class="nav_menu box">
+          <h4>个人资料</h4>
+          <div class="nav_label" style="top: 101px;"><span></span></div>
+          <ul class="menu">
+            <li class="menu_item"><a href="{{ url_for('.profile',uid=cuser.id) }}">资料</a></li>
+            <li class="menu_item current"><a href="javascript:void(0)">我的收藏</a></li>
+            <li class="menu_item "><a href="{{ url_for('.myposts',uid=cuser.id) }}">我的帖子</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="col-md-9">
+        <div class="post-list-group">
+            <ul class="">
+              {% for post in posts %}
+                <li class="post-list">
+                  <div class="author-avatar-group">
+                    <img class="img-circle" width="50px" height="50px" src="{{ post.author.avatar|default( static('common/images/avatar.jpg'),boolean=True) }}" alt="">
+                  </div>
+                  <div class="post-info-group">
+                    <a href='{{ url_for('front.post_detail',post_id=post.id) }}' class="post-title">{{ post.title }}</a>
+                    <div class="post-info">
+                      <span>作者：{{ post.author.username }}</span>
+                      <span>所属板块：{{ post.board.name }}</span>
+                      <span>发布时间：{{ moment(post.create_time).fromNow() }}</span>
+                      <span>评论：{{ post.comments|length }}</span>
+                      <span>阅读：{{ post|read_count }}</span>
+                    </div>
+                  </div>
+                </li>
+              {% endfor %}
+            </ul>
+            <div class="post-pagination text-center">
+{#              {{ pagination.links }}#}
+            </div>
+          </div>
+      </div>
+    </div>
+
+  </div>
+{% endblock %}

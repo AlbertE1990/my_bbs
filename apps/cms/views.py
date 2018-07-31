@@ -24,19 +24,17 @@ base_path = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 @login_manager.user_loader
 def load_user(user_id):
     return CMSUser.query.get(user_id)
-
-
 @bp.route('/')
 @login_required
 def index():
-    return render_template('cms/cms_index.html')
+    return render_template('cms/main.html')
 
 
 #登陆
 class LoginView(MethodView):
 
     def get(self):
-        return render_template('cms/cms_login.html')
+        return render_template('cms/login.html')
 
     def post(self):
         form = LoginForm(request.form)
@@ -67,18 +65,17 @@ def logout():
 #个人信息
 class ProfileView(MethodView):
     decorators = [login_required]
-
-
+    
     def get(self):
-        return render_template('cms/cms_profile.html')
+        return render_template('cms/profile.html')
 
     def post(self):
         #有待优化
-        detail = g.user.detail
+        detail = current_user.detail
         form = ProfileForm(request.form)
         if form.validate():
             data = {}
-            data['uid'] = g.user.id
+            data['uid'] = current_user.id
             data['name'] = form.name.data
             data['phone'] = form.phone.data
             data['birthday'] = form.birthday.data
@@ -114,15 +111,15 @@ class ResetPasswordView(MethodView):
     decorators = [login_required]
 
     def get(self):
-        return render_template('cms/cms_resetpwd.html')
+        return render_template('cms/resetpwd.html')
 
     def post(self):
         form = ResetPasswordForm(request.form)
         if form.validate():
             raw_pwd = form.raw_pwd.data
             new_pwd = form.new_pwd1.data
-            if g.user.check_password(raw_pwd):
-                g.user.password = new_pwd
+            if current_user.check_password(raw_pwd):
+                current_user.password = new_pwd
                 return restful.success('密码修改成功！')
             else:
                 return restful.params_error('原始密码错误！')
@@ -136,12 +133,12 @@ class ResetEmailView(MethodView):
     decorators = [login_required,]
 
     def get(self):
-        return render_template('cms/cms_resetemail.html')
+        return render_template('cms/resetemail.html')
 
     def post(self):
         form = ResetEmailForm(request.form)
         if form.validate():
-            g.user.email = form.email.data
+            current_user.email = form.email.data
             db.session.commit()
             return restful.success(message='邮箱修改成功！')
         else:
@@ -163,7 +160,7 @@ def email_captcha():
     captcha = "".join(random.sample(source, 6))
     try:
         send_email()
-        my_redis.set(email, subject='CMS系统修改邮箱验证码',template='email/cms_change_email',captcha=captcha, user=current_user,ex=300)
+        my_redis.set(email, subject='CMS系统修改邮箱验证码',template='email/change_email',captcha=captcha, user=current_user,ex=300)
         print('生成的验证码', captcha)
     except:
         return restful.server_error()
@@ -176,26 +173,26 @@ def email_captcha():
 @permission(CMSPermission.CMSUSER)
 def cms_users():
     users = CMSUser.query.all()
-    return render_template('cms/cms_user_manage.html',users=users)
+    return render_template('cms/user_manage.html',users=users)
 
 
 #注册cms用户
 
-def create_cms_user(username,password,email):
+def create_user(username,password,email):
     user = CMSUser(username=username,password=password,email=email)
     db.session.add(user)
     db.session.commit()
 
-@bp.route('/cms_register/',methods=['post'])
+@bp.route('/register/',methods=['post'])
 @login_required
 @permission(CMSPermission.CMSUSER)
-def cms_register():
+def register():
     form = RegisterForm(request.form)
     if form.validate():
         username = form.username.data
         email = form.email.data
         password = form.new_pwd1.data
-        create_cms_user(username=username, password=password, email=email)
+        create_user(username=username, password=password, email=email)
         return restful.success(message='添加新用户成功！')
     else:
         print(form.errors)
@@ -208,7 +205,7 @@ def cms_register():
 @permission(CMSPermission.POSTER)
 def posts():
     page = request.args.get(get_page_parameter(), type=int, default=1)
-    PER_PAGE  = current_app.config['CMS_PER_PAGE']
+    PER_PAGE  = current_app.config['PER_PAGE']
     start = (page-1)*PER_PAGE
     end = start+PER_PAGE
     query_obj = PostModel.query.order_by(PostModel.create_time.desc())
@@ -220,7 +217,7 @@ def posts():
         'pagination': pagination
         }
 
-    return render_template('cms/cms_posts.html',**context)
+    return render_template('cms/posts.html',**context)
 
 
 #删帖
@@ -278,7 +275,7 @@ def uhpost():
 @login_required
 @permission(CMSPermission.COMMENTER)
 def comments():
-    return render_template('cms/cms_comments.html')
+    return render_template('cms/comments.html')
 
 
 #板块管理
@@ -287,7 +284,7 @@ def comments():
 @permission(CMSPermission.BOARDER)
 def boards():
     boards = BoardModel.query.all()
-    return render_template('cms/cms_boards.html',boards=boards)
+    return render_template('cms/boards.html',boards=boards)
 
 
 #添加板块
@@ -341,7 +338,7 @@ def dboard():
 @permission(CMSPermission.BOARDER)
 def banners():
     banners = BannerModel.query.order_by(BannerModel.priority.desc())
-    return render_template('cms/cms_banners.html',banners=banners)
+    return render_template('cms/banners.html',banners=banners)
 
 
 #轮播图添加
@@ -408,7 +405,7 @@ def dbanners():
 def fusers():
 
     page = request.args.get(get_page_parameter(), type=int, default=1)
-    PER_PAGE = current_app.config['CMS_PER_PAGE']
+    PER_PAGE = current_app.config['PER_PAGE']
     start = (page - 1) * PER_PAGE
     end = start + PER_PAGE
     query_obj = FrontUser.query.order_by(FrontUser.join_time.desc())
@@ -419,7 +416,7 @@ def fusers():
         'users': users,
         'pagination': pagination
     }
-    return render_template('cms/cms_frontuser_manage.html',**context)
+    return render_template('cms/frontuser_manage.html',**context)
 
 
 
@@ -431,5 +428,5 @@ bp.add_url_rule('/resetemail',view_func=ResetEmailView.as_view('resetemail'))
 bp.add_url_rule('/login/',endpoint='login',view_func=LoginView.as_view('login'))
 
 @bp.context_processor
-def cms_context_processor():
+def context_processor():
     return{'CMSPermission':CMSPermission}

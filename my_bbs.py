@@ -6,8 +6,6 @@ from flask_wtf import CSRFProtect
 from exts import db,mail,login_manager,moment,bootstrap
 
 
-
-
 def create_app():
     app = Flask(__name__)
     app.register_blueprint(cms_bp)

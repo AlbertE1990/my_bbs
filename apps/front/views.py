@@ -1,6 +1,7 @@
 from flask import  Blueprint,views,render_template,url_for,make_response,g,request,session,redirect,abort,flash
 from utils.captcha import Captcha
 from utils import my_redis,restful
+from utils.my_redis import cache
 from .forms import SignupForm,LoginForm,AddPostForm,AddCommentForm,PasswordResetRequestForm,PasswordResetForm
 from .models import FrontUser
 from exts import db,login_manager,mail
@@ -12,6 +13,13 @@ from flask_paginate import Pagination,get_page_parameter
 from apps.email import send_email
 
 bp = Blueprint('front',__name__)
+
+
+@bp.app_template_filter('read_count')
+def read_count(post):
+    if cache.hget(post.id,'read_count'):
+        return cache.hget(post.id,'read_count').decode('utf-8')
+    return 0
 
 #首页视图函数
 @bp.route('/')
@@ -114,7 +122,7 @@ class ResetPwdView(views.MethodView):
             user = FrontUser.query.filter_by(email=email).first()
             if user:
                 token = user.generate_reset_token()
-                print(token)
+                my_redis.set(token,'Enable')
                 send_email(user.email, '重置密码',
                            'email/reset_password',
                            user=user, token=token)
@@ -127,12 +135,16 @@ class ResetPwdView(views.MethodView):
 #重置密码
 @bp.route('/resetpwd/<token>',methods=['GET', 'POST'])
 def password_reset(token):
+    if not my_redis.get(token):
+        flash('该链接已经修改了密码，如需再次修改，请重新验证邮箱！')
+        return redirect(url_for('.resetpwd'))
     form = PasswordResetForm()
     if form.validate_on_submit():
         new_password = form.password.data
-        if FrontUser.reset_password(token,new_password):
+        if FrontUser.reset_password(token,new_password) and my_redis.get(token):
             db.session.commit()
             flash('密码重置成功')
+            my_redis.delete(token)
             return redirect(url_for('.login'))
         else:
             flash('链接失效，请获取新链接')
@@ -212,6 +224,8 @@ def post_detail(post_id):
             'comments':comments,
             'pagination':pagination
         }
+
+        cache.hincrby(post_id,'read_count')
         return render_template('front/front_post_detail.html',**context)
     else:
         abort(404)
@@ -232,6 +246,57 @@ def add_comment():
         return restful.success('评论发表成功！')
     else:
         return restful.params_error(form.get_error())
+
+#收藏帖子
+@bp.route('/mark/')
+def mark():
+    pid = request.args.get('post_id')
+    book_status = request.args.get('book_status')
+    user = g.get('front_user')
+    if not user:
+        return restful.params_error('请先登陆！')
+    post = PostModel.query.get(pid)
+    if post:
+        if book_status == 'book':
+            user.bookmark.append(post)
+            db.session.add(user)
+            db.session.commit()
+            return restful.success('收藏成功')
+        else:
+            print(user.bookmark)
+            user.bookmark.remove(post)
+            db.session.add(user)
+            db.session.commit()
+            return restful.success('取消收藏成功')
+    else:
+        return restful.params_error('未找到该帖子！')
+
+#个人信息
+@bp.route('/profile/<uid>/')
+def profile(uid):
+    user = FrontUser.query.get(uid)
+    if not uid:
+        abort(404)
+    return render_template('front/profile.html',cuser=user)
+
+#书签收藏
+@bp.route('/bookmark/<uid>/')
+def bookmark(uid):
+    user = FrontUser.query.get(uid)
+    if not user:
+        abort(404)
+    posts = user.bookmark
+    return render_template('front/bookmark.html', cuser=user,posts=posts)
+
+#我的帖子
+@bp.route('/myposts/<uid>/')
+def myposts(uid):
+    user = FrontUser.query.get(uid)
+    if not user:
+        abort(404)
+    posts = user.posts
+    return render_template('front/myposts.html', cuser=user,posts=posts)
+
 
 
 

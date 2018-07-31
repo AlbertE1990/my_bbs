@@ -1,28 +1,7 @@
-{% from "common/_macors.html" import static,bootstrap_plugin %}
-{% set user = current_user %}
-{% set detail = current_user.detail %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Title</title>
-  <meta name="csrf_token" content="{{ csrf_token() }}" >
-  {{ bootstrap_plugin() }}
-
-  <link href={{ static('cms/css/thin-admin.css') }} rel="stylesheet" media="screen">
-  <link href={{ static('cms/css/font-awesome.css') }} rel="stylesheet" media="screen">
-  <link href={{ static('cms/style/style.css') }} rel="stylesheet" media="screen">
-  <link href={{ static('cms/style/nestable.css') }} rel="stylesheet" media="screen">
-  <script src={{ static('cms/js/iframe.js') }}></script>
-  <link rel="stylesheet" href={{ static('cms/css/iframe.css') }}>
-  <script src={{ static('common/js/myajax.js') }}></script>
-
-  <link href="{{ static('cms/css/font-awesome.css') }}" rel="stylesheet" media="screen">
-  <link href="{{ static('cms/style/style.css') }}" rel="stylesheet">
-
-</head>
-<body>
-
+{% extends "cms/iframe_base.html" %}
+{% set detail=current_user.detail %}
+{% block title %}个人信息{% endblock %}
+{% block content %}
 <div class="content container" >
 
   <div class="row">
@@ -39,10 +18,10 @@
                   <div class="text-align-center"> <img style="height: 112px;" alt="64x64" src="{{ detail.avatar }}" class="img-circle"> </div>
                 </div>
                 <div class="col-md-8">
-                  <h3 class="no-margin" id="username">{{user.username}}</h3>
+                  <h3 class="no-margin" id="username">{{current_user.username}}</h3>
                   <address>
-                    角色：<strong>{{ user.role.name|default('未知角色') }}</strong><br>
-                    <abbr title="Work email">邮箱：</abbr> <a href="mailto:#">{{user.email}}</a><br>
+                    角色：<strong>{{ current_user.role.name|default('未知角色') }}</strong><br>
+                    <abbr title="Work email">邮箱：</abbr> <a href="mailto:#">{{current_user.email}}</a><br>
                     <abbr title="Work Phone">电话号码:</abbr> {{ detail.phone |default('还未添加电话号码')}}
                   </address>
                 </div>
@@ -121,7 +100,5 @@
     </div>
   </div>
 </div>
-<script type='text/javascript' src={{static('cms/assets/plugins/form-inputmask/jquery.inputmask.min.js')}}></script>
+{% endblock %}
 
-</body>
-</html>

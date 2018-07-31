@@ -1,16 +1,25 @@
 from exts import db
-from flask import current_app
+from flask import current_app,url_for
 import shortuuid
 import enum
 from datetime import datetime
 from werkzeug.security import generate_password_hash,check_password_hash
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 
+
 class GenderEnum(enum.Enum):
     MALE = 1
     FMALE = 2
     SECRET = 3
     UNKNOW = 4
+
+
+BookMark = db.Table(
+    'bookmark',
+    db.Column('user_id',db.String(100),db.ForeignKey('front_user.id'),primary_key=True),
+    db.Column('post_id',db.Integer,db.ForeignKey('post.id'),primary_key=True)
+)
+
 
 class FrontUser(db.Model):
     __tablename__ = 'front_user'
@@ -24,6 +33,7 @@ class FrontUser(db.Model):
     signature = db.Column(db.String(100))
     gender  = db.Column(db.Enum(GenderEnum),default=GenderEnum.UNKNOW)
     join_time = db.Column(db.DATETIME,default=datetime.now)
+    bookmark = db.relationship('PostModel', secondary=BookMark, backref=db.backref('mark_users'))
 
     def __init__(self,*args,**kwargs):
         if 'password' in kwargs:
@@ -42,6 +52,11 @@ class FrontUser(db.Model):
     def password(self,newpassword):
         self._password = generate_password_hash(newpassword)
 
+
+    def get_avatar(self):
+        defautl_avatar = url_for('static',filename='common/images/avatar.jpg')
+        return self.avatar or defautl_avatar
+
     def check_password(self,rawpassword):
         return check_password_hash(self._password,rawpassword)
 
@@ -56,11 +71,14 @@ class FrontUser(db.Model):
             data = s.loads(token.encode('utf-8'))
         except:
             return False
-        user = FrontUser.query.get(data.get('reset'))
+        user_id = data.get('reset')
+        user = FrontUser.query.get(user_id)
         if not user:
             return False
         user.password = new_password
         db.session.add(user)
         return True
+
+
 
 

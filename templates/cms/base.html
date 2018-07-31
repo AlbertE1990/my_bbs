@@ -1,0 +1,25 @@
+{% extends "bootstrap/base.html" %}
+{% from "common/_macors.html" import static %}
+
+{% block scripts %}
+    <script src="{{ static('common/js/jquery.js') }}"></script>
+    <script src="{{ static('common/js/bootstrap.min.js') }}"></script>
+{% endblock %}
+
+{% block styles %}
+  <link href="{{ static('common/css/bootstrap.css') }}" rel="stylesheet" media="screen">
+  <link href="{{ static('cms/css/thin-admin.css') }}" rel="stylesheet" media="screen">
+  <link href="{{ static('cms/css/font-awesome.css') }}" rel="stylesheet" media="screen">
+  <link href="{{ static('cms/style/style.css') }}" rel="stylesheet"><link rel="shortcut icon" href="{{ static('cms/images/favicon.ico') }}">
+{% endblock %}
+
+{% block title %}
+  CMS后台管理系统
+{% endblock %}
+
+
+
+
+
+
+

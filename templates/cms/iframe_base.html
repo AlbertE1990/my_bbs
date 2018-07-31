@@ -1,0 +1,23 @@
+{% extends "cms/base.html" %}
+{% block head %}
+    {{ super() }}
+    <meta name="csrf_token" content="{{ csrf_token() }}" >
+{% endblock %}
+{% block scripts %}
+    {{ super() }}
+    <script src={{ static('cms/js/iframe.js') }}></script>
+    <script src={{ static('common/js/myajax.js') }}></script>
+    <script src={{ static('cms/js/boards.js') }}></script>
+    <script src="{{ static("common/js/xtalert.js") }}"></script>
+    <script src="{{ static("common/js/sweetalert.min.js") }}"></script>
+{% endblock %}
+
+{% block styles %}
+    {{ super() }}
+  <link href={{ static('cms/style/nestable.css') }} rel="stylesheet" media="screen">
+  <link rel="stylesheet" href={{ static('cms/css/iframe.css') }}>
+{% endblock %}
+
+
+
+
