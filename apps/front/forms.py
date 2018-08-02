@@ -4,6 +4,8 @@ from wtforms import StringField,BooleanField,IntegerField,SubmitField,PasswordFi
 from wtforms.validators import Regexp,InputRequired,EqualTo,Length,ValidationError,Email
 from utils import my_redis
 from .models import FrontUser
+
+
 class SignupForm(BaseForm):
     telephone = StringField(validators=[Regexp(r"1[345789]\d{9}",message='请输入正确的手机号码！')])
     username = StringField(validators=[Length(min=2,max=20,message='用户名长度为2-20个字符！')])
@@ -35,10 +37,12 @@ class LoginForm(BaseForm):
         if graph_captcha.lower() != graph_captcha_redis.lower():
             raise ValidationError('验证码错误')
 
+
 class AddPostForm(BaseForm):
     title = StringField(validators=[InputRequired(message='请输入标题！')])
     content = StringField(validators=[InputRequired(message='请输入内容！')])
     board_id = IntegerField(validators=[InputRequired(message='请输入板块ID！')])
+
 
 class AddCommentForm(BaseForm):
     content = StringField(validators=[InputRequired(message='请输入内容！')])

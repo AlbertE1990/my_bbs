@@ -21,6 +21,13 @@ BookMark = db.Table(
 )
 
 
+class Follow(db.Model):
+    __tablename__ = 'follows'
+    follower_id = db.Column(db.String(100), db.ForeignKey('front_user.id'), primary_key=True)
+    followed_id = db.Column(db.String(100), db.ForeignKey('front_user.id'), primary_key=True)
+    timestamp = db.Column(db.DateTime,default=datetime.now)
+
+
 class FrontUser(db.Model):
     __tablename__ = 'front_user'
     id = db.Column(db.String(100),primary_key=True,default=shortuuid.uuid)
@@ -28,12 +35,26 @@ class FrontUser(db.Model):
     username = db.Column(db.String(50),nullable=False)
     _password = db.Column(db.String(100),nullable=False)
     email = db.Column(db.String(50),unique=True)
+    confirm = db.Column(db.Boolean,default=False)
     realname = db.Column(db.String(100))
     avatar = db.Column(db.String(100))
     signature = db.Column(db.String(100))
     gender  = db.Column(db.Enum(GenderEnum),default=GenderEnum.UNKNOW)
     join_time = db.Column(db.DATETIME,default=datetime.now)
+
     bookmark = db.relationship('PostModel', secondary=BookMark, backref=db.backref('mark_users'))
+
+    followed = db.relationship('Follow',
+                              foreign_keys=[Follow.follower_id],
+                              backref=db.backref('follower',lazy='joined'),
+                              lazy='dynamic',
+                              cascade='all,delete-orphan')
+    followers = db.relationship('Follow',
+                                foreign_keys=[Follow.followed_id],
+                                backref=db.backref('followed', lazy='joined'),
+                                lazy='dynamic',
+                                cascade='all,delete-orphan')
+
 
     def __init__(self,*args,**kwargs):
         if 'password' in kwargs:
@@ -51,7 +72,6 @@ class FrontUser(db.Model):
     @password.setter
     def password(self,newpassword):
         self._password = generate_password_hash(newpassword)
-
 
     def get_avatar(self):
         defautl_avatar = url_for('static',filename='common/images/avatar.jpg')
@@ -78,6 +98,9 @@ class FrontUser(db.Model):
         user.password = new_password
         db.session.add(user)
         return True
+
+
+
 
 
 

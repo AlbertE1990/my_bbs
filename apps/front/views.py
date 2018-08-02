@@ -21,6 +21,7 @@ def read_count(post):
         return cache.hget(post.id,'read_count').decode('utf-8')
     return 0
 
+
 #首页视图函数
 @bp.route('/')
 def index():
@@ -130,6 +131,10 @@ class ResetPwdView(views.MethodView):
             else:
                 flash('该邮箱不存在')
         return redirect(url_for('.resetpwd'))
+
+
+#确认邮件
+
 
 
 #重置密码

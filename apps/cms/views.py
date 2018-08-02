@@ -8,7 +8,6 @@ from .decorators import permission
 from exts import db,mail,login_manager
 import string
 import random
-from flask_mail import Message
 from apps.email import send_email
 from flask_login import login_required,login_user,logout_user,current_user
 import os
@@ -44,7 +43,7 @@ class LoginView(MethodView):
             remember = form.remember.data
             user = CMSUser.query.filter_by(email=email).first()
             if user and user.check_password(password):
-                login_user(user)
+                login_user(user,remember)
                 return restful.success(message='登录成功!')
             else:
                 return restful.params_error(message='邮箱或者密码错误！')
@@ -162,7 +161,7 @@ def email_captcha():
         send_email()
         my_redis.set(email, subject='CMS系统修改邮箱验证码',template='email/change_email',captcha=captcha, user=current_user,ex=300)
         print('生成的验证码', captcha)
-    except:
+    except Exception:
         return restful.server_error()
     return restful.success(message="邮件发送成功请注意查收！")
 
