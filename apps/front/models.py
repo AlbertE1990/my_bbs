@@ -29,6 +29,7 @@ class Follow(db.Model):
 
 
 class FrontUser(db.Model):
+
     __tablename__ = 'front_user'
     id = db.Column(db.String(100),primary_key=True,default=shortuuid.uuid)
     telephone = db.Column(db.String(11),nullable=False,unique=True)
@@ -55,12 +56,29 @@ class FrontUser(db.Model):
                                 lazy='dynamic',
                                 cascade='all,delete-orphan')
 
-
-    def __init__(self,*args,**kwargs):
+    def __init__(self, *args, **kwargs):
         if 'password' in kwargs:
             self.password = kwargs.get('password')
             kwargs.pop('password')
-        super(FrontUser,self).__init__(*args,**kwargs)
+        super(FrontUser, self).__init__(*args, **kwargs)
+
+    def follow(self,user):
+        if not self.is_following(user):
+            f = Follow(follower=self,followed=user)
+            db.session.add(f)
+
+    def is_following(self,user):
+        return self.followed.filter_by(followed_id=user.id).first() is not None
+
+    def unfollow(self,user):
+        f = self.followed.filter_by(followed_id=user.id).first()
+        if f:
+            db.session.delete(f)
+
+    def is_followd_by(self,user):
+        return self.followers.filter_by(follower_id=user.id).first() is not None
+
+
 
     def __repr__(self):
         return "<FrontUser username:%s,telephone:%s>"%(self.username,self.telephone)

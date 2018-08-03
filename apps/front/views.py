@@ -284,7 +284,7 @@ def profile(uid):
         abort(404)
     return render_template('front/profile.html',cuser=user)
 
-#书签收藏
+#显示书签收藏信息
 @bp.route('/bookmark/<uid>/')
 def bookmark(uid):
     user = FrontUser.query.get(uid)
@@ -301,6 +301,44 @@ def myposts(uid):
         abort(404)
     posts = user.posts
     return render_template('front/myposts.html', cuser=user,posts=posts)
+
+#关注用户
+@bp.route('/follow/<uid>')
+@login_required
+def follow(uid):
+    current_user = g.front_user
+    user = FrontUser.query.get(uid)
+    if not user:
+        print('当前用户不存在')
+        return restful.params_error('当前用户不存在')
+    if current_user.is_following(user):
+        print('已经关注该用户')
+        return restful.params_error('已经关注该用户')
+    current_user.follow(user)
+    db.session.commit()
+    print('关注成功')
+    return restful.success('关注成功')
+
+#取消关注
+@bp.route('/unfollow/<uid>')
+@login_required
+def unfollow(uid):
+    user = FrontUser.query.get(uid)
+    if not user:
+        return restful.params_error('当前用户不存在')
+    if not g.front_user.is_following(user):
+        return restful.params_error('您还没有关注该用户')
+    g.front_user.unfollow(user)
+    db.session.commit()
+    return restful.success('取消关注成功')
+
+#显示关注着
+@bp.route('/followers/<uid>')
+def followers(uid):
+    user = FrontUser.query.get_or_404(uid)
+    user_followers = user.followers
+    pass
+
 
 
 
