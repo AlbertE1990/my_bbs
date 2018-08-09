@@ -1,4 +1,4 @@
-from flask import g,session,request,render_template
+from flask import g,session,request,render_template,redirect,url_for
 from .views import bp
 import config
 from .models import FrontUser
@@ -11,7 +11,14 @@ def before_request():
         user = FrontUser.query.get(user_id)
         if user:
             g.front_user = user
+        if not user.confirm \
+                and request.endpoint != 'front.unconfirm' \
+                and request.endpoint != 'front.resend_confirmation' \
+                and request.endpoint != 'front.confirm' \
+                and request.endpoint != 'static':
+            return redirect(url_for('front.unconfirm'))
 
-@bp.errorhandler(404)
+
+@bp.app_errorhandler(404)
 def page_not_found(error):
     return render_template('front/front_404.html'),404

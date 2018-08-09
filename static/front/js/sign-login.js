@@ -30,6 +30,7 @@ $(function(){
         }
     });
 
+    // 注册函数
     $('#signup-submit-btn').click(function (event) {
         event.preventDefault();
         var telephone = $('#telephone').val();
@@ -37,6 +38,7 @@ $(function(){
         var password1 = $('#password1').val();
         var password2 = $('#password2').val();
         var graph_captcha = $('#graph-captcha').val();
+        var email = $('#email').val();
         myajax.post({
             'url':'/signup/',
             'data':{
@@ -44,7 +46,8 @@ $(function(){
                 'username':username,
                 'password1':password1,
                 'password2':password2,
-                'graph_captcha':graph_captcha
+                'graph_captcha':graph_captcha,
+                'email':email
             },
             'success':function (data) {
                 if(data.code == 200){

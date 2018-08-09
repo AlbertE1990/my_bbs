@@ -106,7 +106,7 @@ def front_users(count=30):
 
 @manager.option('-c','--count',dest='count')
 def posts(count=100):
-
+    count = int(count)
     for i in range(count):
         author_id = FrontUser.query.order_by(func.rand()).limit(1).first().id
         board_id = BoardModel.query.order_by(func.rand()).limit(1).first().id

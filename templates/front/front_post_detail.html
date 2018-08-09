@@ -114,8 +114,17 @@
             <div class="author-msg">
               <span>{{ post.author.username }}</span>
             </div>
-            <a href="{{ url_for('.profile',uid=post.author.id) }}" class="btn btn-warning">他的主页</a>
-            <a href="{{ url_for('.profile',uid=post.author.id) }}" class="btn btn-warning">关注他</a>
+
+            {% if user.id == post.author.id %}
+              <a href="{{ url_for('.profile',uid=user.id) }}" class="btn btn-warning">我的主页</a>
+            {% else %}
+              <a href="{{ url_for('.profile',uid=post.author.id) }}" class="btn btn-warning">他的主页</a>
+              {% if user and user.is_following(post.author) %}
+                <a id="unfollow" data-href="{{ url_for('.unfollow',uid=post.author.id) }}" class="btn btn-warning follow">取消关注</a>
+              {% else %}
+                <a id='follow' data-href="{{ url_for('.follow',uid=post.author.id) }}" class="btn btn-warning follow">关注他</a>
+              {% endif %}
+            {% endif %}
 
           </div>
 

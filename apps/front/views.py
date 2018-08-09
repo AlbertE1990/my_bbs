@@ -21,6 +21,7 @@ def read_count(post):
         return cache.hget(post.id,'read_count').decode('utf-8')
     return 0
 
+
 #首页视图函数
 @bp.route('/')
 def index():
@@ -68,10 +69,18 @@ class SignupView(views.MethodView):
             telephone = form.telephone.data
             username = form.username.data
             password = form.password1.data
-            user = FrontUser(telephone=telephone,username=username,password=password)
+            email = form.email.data
+            user = FrontUser(telephone=telephone,username=username,password=password,email=email)
             db.session.add(user)
+            token = user.generate_comfirmation_token()
+            print(url_for('.confirm', token=token))
+            send_email(g.front_user.email, '重置密码',
+                       'email/confirm',
+                       user=g.front_user, token=token)
+            # return restful.success(message='注册成功,')
+            login_email = 'mail.'+email.split('@')[-1]
             db.session.commit()
-            return restful.success(message='注册成功  ')
+            return render_template('front/reigster_success.html',login_email=login_email)
         else:
             message = form.get_error()
             print('message:',message)
@@ -132,6 +141,46 @@ class ResetPwdView(views.MethodView):
         return redirect(url_for('.resetpwd'))
 
 
+#未确认邮箱，拦截页面，等待从新发送确认邮件
+@bp.route('/unconfirm/')
+@login_required
+def unconfirm():
+    return render_template('front/unconfirm.html')
+
+
+#重新发送确认邮件
+@bp.route('/reconfirm/')
+@login_required
+def resend_confirmation():
+    token = g.front_user.generate_comfirmation_token()
+    print(url_for('.confirm',token=token))
+    send_email(g.front_user.email, '重置密码',
+               'email/confirm',
+               user=g.front_user, token=token)
+    flash('重置密码链接已发送到你邮箱，请注意查收')
+    return render_template('front/unconfirm.html')
+
+
+#确认邮箱
+@bp.route('/confirm/<token>')
+def confirm(token):
+    if g.front_user.confirm:
+        flash('账户已经确认，无需重复确认，谢谢！')
+    if g.front_user.confirm_token(token):
+        flash('账户确认成功，谢谢！')
+        db.session.commit()
+    else:
+        flash('账户确认链接失效，请从前发送链接')
+    return redirect(url_for('.middle'))
+
+
+#middle
+@bp.route('/middle/')
+def middle():
+    return render_template('front/middle.html')
+
+
+
 #重置密码
 @bp.route('/resetpwd/<token>',methods=['GET', 'POST'])
 def password_reset(token):
@@ -163,8 +212,9 @@ def logout():
 @bp.route('/captcha/')
 def gene_captcha():
     text,image = Captcha.gene_graph_captcha()
-    my_redis.set('captcha',text,ex=120)
-    print('captcha:',my_redis.get('captcha'))
+    # my_redis.set('captcha',text,ex=120)
+    session['singup_captcha'] = text
+    print('captcha:',text)
     out = BytesIO()
     image.save(out,'png')
     out.seek(0)
@@ -176,9 +226,10 @@ def gene_captcha():
 #检测验证码
 @bp.route('/captcha/check/')
 def check_captcha():
-    print('get captcha:',my_redis.get('captcha'))
+    # print('get captcha:',my_redis.get('captcha'))
+    print('get captcha:', session.get('singup_captcha'))
     cap_val = request.args.get('cap_val')
-    if cap_val.lower() == my_redis.get('captcha').decode('utf8').lower():
+    if cap_val.lower() == session.get('singup_captcha').lower():
         return restful.success()
     else:
         return restful.params_error()
@@ -279,7 +330,7 @@ def profile(uid):
         abort(404)
     return render_template('front/profile.html',cuser=user)
 
-#书签收藏
+#显示书签收藏信息
 @bp.route('/bookmark/<uid>/')
 def bookmark(uid):
     user = FrontUser.query.get(uid)
@@ -297,8 +348,42 @@ def myposts(uid):
     posts = user.posts
     return render_template('front/myposts.html', cuser=user,posts=posts)
 
+#关注用户
+@bp.route('/follow/<uid>')
+@login_required
+def follow(uid):
+    current_user = g.front_user
+    user = FrontUser.query.get(uid)
+    if not user:
+        print('当前用户不存在')
+        return restful.params_error('当前用户不存在')
+    if current_user.is_following(user):
+        print('已经关注该用户')
+        return restful.params_error('已经关注该用户')
+    current_user.follow(user)
+    db.session.commit()
+    print('关注成功')
+    return restful.success('关注成功')
 
+#取消关注
+@bp.route('/unfollow/<uid>')
+@login_required
+def unfollow(uid):
+    user = FrontUser.query.get(uid)
+    if not user:
+        return restful.params_error('当前用户不存在')
+    if not g.front_user.is_following(user):
+        return restful.params_error('您还没有关注该用户')
+    g.front_user.unfollow(user)
+    db.session.commit()
+    return restful.success('取消关注成功')
 
+#显示关注着
+@bp.route('/followers/<uid>')
+def followers(uid):
+    user = FrontUser.query.get_or_404(uid)
+    user_followers = user.followers
+    pass
 
 
 
