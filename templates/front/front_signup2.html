@@ -1,0 +1,46 @@
+{% extends "front/front_base.html" %}
+{% import 'bootstrap/wtf.html ' as wtf %}
+
+{% block title %}
+注册
+{% endblock %}
+
+{% block styles %}
+    {{ super() }}
+    <link rel="stylesheet" href="{{ static('front/css/sign_login.css') }}">
+{% endblock %}
+
+{% block scripts %}
+  {{ super() }}
+  <script src="{{ static('front/js/sign-login.js') }}"></script>
+{% endblock %}
+
+{% block navbar %}
+{% endblock %}
+
+{% block content %}
+
+  <div class="outer-box">
+      <div class="logo-box">
+          <a href="/">
+              <img src={{ static('common/images/logo.png') }}>
+          </a>
+      </div>
+      <h2 class="page-title text-primary text-center">注册账号</h2>
+      <div class="row">
+          <div class="col-md-6 col-md-offset-3">
+              {{ wtf.quick_form(signupform) }}
+              <div class="input-group-addon" id="captcha-box">
+                <img src="/captcha/?type=singup_captcha" id="captcha" alt="">
+              </div>
+          </div>
+
+      </div>
+
+  </div>
+  {% if return_to %}
+  <span style="display: none" id="return-to">{{ return_to }}</span>
+  {% endif %}
+  {{ current_user.username }}
+
+{% endblock %}

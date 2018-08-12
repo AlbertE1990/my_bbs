@@ -58,6 +58,18 @@ def index():
     return render_template('front/front_index.html',**context)
 
 
+#确认邮箱邮件
+def send_confirm(user,email):
+    if user:
+        token = user.generate_comfirmation_token()
+        print(url_for('.confirm', token=token,_external=True))
+        send_email(email, 'Mybbs账户确认邮箱',
+                   'email/confirm',
+                   user=user, token=token)
+        return True
+    return False
+
+
 #注册视图函数
 class SignupView(views.MethodView):
     def get(self):
@@ -70,21 +82,41 @@ class SignupView(views.MethodView):
             username = form.username.data
             password = form.password1.data
             email = form.email.data
-            user = FrontUser(telephone=telephone,username=username,password=password,email=email)
-            db.session.add(user)
-            token = user.generate_comfirmation_token()
-            print(url_for('.confirm', token=token))
-            send_email(g.front_user.email, '重置密码',
-                       'email/confirm',
-                       user=g.front_user, token=token)
-            # return restful.success(message='注册成功,')
-            login_email = 'mail.'+email.split('@')[-1]
-            db.session.commit()
-            return render_template('front/reigster_success.html',login_email=login_email)
+            user = FrontUser(telephone=telephone, username=username, password=password, email=email)
+            print(user)
+            # db.session.add(user)
+            # token = user.generate_comfirmation_token()
+            # print(url_for('.confirm', token=token))
+            # send_email(email, '确认邮箱',
+            #            'email/confirm',
+            #            user=user, token=token)
+            # login_email = 'mail.'+email.split('@')[-1]
+            # db.session.commit()
+            return restful.success('ok')
         else:
-            message = form.get_error()
-            print('message:',message)
-            return restful.params_error(message=message)
+            # message = form.get_error()
+            # print('message:',message)
+            print(form.errors)
+            return restful.params_error('表单验证未通过')
+
+
+@bp.route('/signup2/',methods=['post','get'])
+def signup2():
+    form = SignupForm()
+    return_to = request.referrer
+    if form.validate_on_submit():
+        telephone = form.telephone.data
+        username = form.username.data
+        password = form.password1.data
+        email = form.email.data
+        user = FrontUser(telephone=telephone,username=username,password=password,email=email)
+        db.session.add(user)
+        db.session.commit()
+        session[FRONT_USER_ID] = user.id
+        send_confirm(user,email)
+        login_email = 'http://mail.'+email.split('@')[-1]
+        return render_template('front/reigster_success.html', login_email=login_email)
+    return render_template('front/front_signup2.html', return_to=return_to, signupform=form)
 
 
 #登录视图函数
@@ -105,8 +137,7 @@ class LoginView(views.MethodView):
             if user:
                 if user.check_password(password):
                     session[FRONT_USER_ID] = user.id
-                    if 1:
-                        session.permanent = True
+                    session.permanent = bool(remember)
                     return restful.success()
                 else:
                     return restful.params_error('密码错误')
@@ -114,7 +145,8 @@ class LoginView(views.MethodView):
                 return restful.params_error('此手机号码未注册！')
 
         else:
-            return restful.params_error(message=form.get_error())
+            print(form.errors)
+            return restful.params_error()
 
 
 #重置密码验证邮箱
@@ -152,17 +184,16 @@ def unconfirm():
 @bp.route('/reconfirm/')
 @login_required
 def resend_confirmation():
-    token = g.front_user.generate_comfirmation_token()
-    print(url_for('.confirm',token=token))
-    send_email(g.front_user.email, '重置密码',
-               'email/confirm',
-               user=g.front_user, token=token)
-    flash('重置密码链接已发送到你邮箱，请注意查收')
+    if send_confirm(g.front_user,g.front_user.email):
+        flash('确认账户链接已发送到你邮箱，请注意查收')
+    else:
+        flash('邮件发送失败')
     return render_template('front/unconfirm.html')
 
 
 #确认邮箱
 @bp.route('/confirm/<token>')
+@login_required
 def confirm(token):
     if g.front_user.confirm:
         flash('账户已经确认，无需重复确认，谢谢！')
@@ -212,9 +243,10 @@ def logout():
 @bp.route('/captcha/')
 def gene_captcha():
     text,image = Captcha.gene_graph_captcha()
-    # my_redis.set('captcha',text,ex=120)
-    session['singup_captcha'] = text
-    print('captcha:',text)
+    type = request.args.get('type')
+    if type:
+        session[type] = text
+        print(type,text)
     out = BytesIO()
     image.save(out,'png')
     out.seek(0)
@@ -225,11 +257,10 @@ def gene_captcha():
 
 #检测验证码
 @bp.route('/captcha/check/')
-def check_captcha():
-    # print('get captcha:',my_redis.get('captcha'))
-    print('get captcha:', session.get('singup_captcha'))
+def check_captcha():       
+    cap_type = request.args.get('type')
     cap_val = request.args.get('cap_val')
-    if cap_val.lower() == session.get('singup_captcha').lower():
+    if cap_val.lower() == session.get(cap_type).lower():
         return restful.success()
     else:
         return restful.params_error()
@@ -255,6 +286,10 @@ class ApostView(views.MethodView):
             return restful.success('帖子发布成功！')
         else:
             return restful.params_error(form.get_error())
+
+
+#修改帖子
+
 
 
 #帖子详情页面

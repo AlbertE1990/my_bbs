@@ -1,5 +1,9 @@
 {% extends "cms/iframe_base.html" %}
 {% block title %}轮播图管理{% endblock %}
+{% block scripts %}
+{{ super() }}
+    <script src={{ static('cms/js/banners.js') }}></script>
+{% endblock %}
 {% block content %}
 <div class="content container" >
   <h1>轮播图管理</h1>

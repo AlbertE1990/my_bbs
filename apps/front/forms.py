@@ -1,28 +1,40 @@
 from apps.forms import BaseForm
 from flask_wtf import FlaskForm
-from wtforms import StringField,BooleanField,IntegerField,SubmitField,PasswordField
+from wtforms import StringField,BooleanField,IntegerField,SubmitField,PasswordField,Form
 from wtforms.validators import Regexp,InputRequired,EqualTo,Length,ValidationError,Email
 from utils import my_redis
 from flask import session
 from .models import FrontUser
 
 
-class SignupForm(BaseForm):
-    telephone = StringField(validators=[Regexp(r"1[345789]\d{9}",message='请输入正确的手机号码！')])
-    username = StringField(validators=[Length(min=2,max=20,message='用户名长度为2-20个字符！')])
-    password1 = StringField(validators=[Length(min=6,max=20,message='密码长度为6-20个字符！')])
-    password2 = StringField(validators=[EqualTo('password1',message='两次密码不相等')])
-    email = StringField(validators=[Email()])
-    graph_captcha = StringField(validators=[Regexp(r"[0-9a-zA-Z]{4}",message='验证码格式错误！')])
+class SignupForm(FlaskForm):
+    telephone = StringField('电话',validators=[Regexp(r"1[345789]\d{9}",message='请输入正确的手机号码！')])
+    username = StringField('用户名',validators=[Length(min=2,max=20,message='用户名长度为2-20个字符！')])
+    password1 = PasswordField('密码',validators=[Length(min=6,max=20,message='密码长度为6-20个字符！')])
+    password2 = PasswordField('重复密码',validators=[EqualTo('password1',message='两次密码不相等')])
+    email = StringField('邮箱',validators=[Email()])
+    graph_captcha = StringField('验证码',validators=[Regexp(r"[0-9a-zA-Z]{4}",message='验证码格式错误！')])
+    submit = SubmitField('注册')
 
     def validate_graph_captcha(self,field):
         graph_captcha = field.data
-        # graph_captcha_mem = my_redis.get('captcha')
-        singup_captcha = session.get('singup_captcha')
+        singup_captcha = session.get('signup_captcha')
         if not singup_captcha:
             raise ValidationError('图形验证码发生错误')
         if graph_captcha.lower() != singup_captcha.lower():
             raise ValidationError('验证码错误')
+
+    def validate_email(self,field):
+        user = FrontUser.query.filter_by(email=field.data).first()
+        if user:
+            raise ValidationError('该邮箱已经注册')
+
+    def validate_telephone(self,field):
+        user = FrontUser.query.filter_by(telephone=field.data).first()
+        if user:
+            raise ValidationError('该手机已经注册')
+
+
 
 
 class LoginForm(BaseForm):
@@ -34,10 +46,10 @@ class LoginForm(BaseForm):
 
     def validate_graph_captcha(self, field):
         graph_captcha = field.data
-        graph_captcha_redis = my_redis.get('captcha').decode('utf8')
-        if not graph_captcha_redis:
+        graph_captcha_session = session.get('login_captcha')
+        if not graph_captcha_session:
             raise ValidationError('图形验证码发生错误')
-        if graph_captcha.lower() != graph_captcha_redis.lower():
+        if graph_captcha.lower() != graph_captcha_session.lower():
             raise ValidationError('验证码错误')
 
 

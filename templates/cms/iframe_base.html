@@ -7,7 +7,6 @@
     {{ super() }}
     <script src={{ static('cms/js/iframe.js') }}></script>
     <script src={{ static('common/js/myajax.js') }}></script>
-    <script src={{ static('cms/js/boards.js') }}></script>
     <script src="{{ static("common/js/xtalert.js") }}"></script>
     <script src="{{ static("common/js/sweetalert.min.js") }}"></script>
 {% endblock %}
@@ -16,6 +15,7 @@
     {{ super() }}
   <link href={{ static('cms/style/nestable.css') }} rel="stylesheet" media="screen">
   <link rel="stylesheet" href={{ static('cms/css/iframe.css') }}>
+    <link rel="stylesheet" href={{ static('common/css/sweetalert.css') }}>
 {% endblock %}
 
 

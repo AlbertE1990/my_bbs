@@ -10,7 +10,7 @@ $(function () {
         var title = titleInput.val();
         var board_id = boardSelect.val();
         var content = ue.getContent();
-        zlajax.post({
+        myajax.post({
             'url':'/apost/',
             'data':{
                 'title':title,

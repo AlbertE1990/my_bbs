@@ -14,19 +14,21 @@
         {% for message in get_flashed_messages() %}
             <div class="alert alert-warning">
             <button type="button" class="close" data-dismiss="alert">&times;</button>
+            {{ message }}
             </div>
-        {{ message }}
+        {% endfor %}
         <div class="nopage-pic"></div>
         <dl>
             <dt>欢迎光临</dt>
             <dd>5秒后回到首页，或点击此处马上返回到首页</dd>
             <dd>
                 <a class="btn btn-warning" href="/">返回到首页</a>
+                <a class="btn btn-warning" href="{{ url_for('.login') }}">立即登录</a>
             </dd>
         </dl>
 
     </div>
-    {% endfor %}
+
     </div>
 {% endblock %}
 

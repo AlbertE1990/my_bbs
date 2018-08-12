@@ -6,8 +6,8 @@ from .models import FrontUser
 @bp.before_request
 def before_request():
     user_id = session.get(config.FRONT_USER_ID)
-    print('front hooks print front_user_id:',user_id)
     if user_id:
+        print('front hooks print front_user_id:', user_id)
         user = FrontUser.query.get(user_id)
         if user:
             g.front_user = user

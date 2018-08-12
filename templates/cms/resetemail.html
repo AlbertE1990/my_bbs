@@ -1,4 +1,8 @@
 {% extends "cms/iframe_base.html" %}
+{% block scripts %}
+    {{ super() }}
+    <script src={{ static('cms/js/resetmail.js') }}></script>
+{% endblock %}
 {% block content %}
 <div class="content container" >
 

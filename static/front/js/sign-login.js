@@ -1,17 +1,36 @@
 $(function(){
+
+    function getQueryString(name,url) {
+      var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)", 'i'); // 匹配目标参数
+        var search = url.split('/?')[1];
+      var result = search.match(reg); // 对querystring匹配目标参数
+
+      if (result != null) {
+        return result[2];
+      } else {
+        return null;
+      }
+    }
+
+    var src = $('#captcha').attr('src');
+
+    //点击更换验证码
     $('#captcha').click(function () {
-        var newsrc = '../captcha/?x='+Math.random();
+        var newsrc = src+'&x='+Math.random();
         $(this).attr('src',newsrc)
     });
 
+    //验证码自动验证
     $('#graph-captcha').keyup(function () {
         var cap_val = $(this).val();
         if(cap_val.length==4){
+            var type = getQueryString('type',src);
             $('#cap-icon').removeClass('glyphicon-question-sign');
             myajax.get({
             'url':'/captcha/check/',
             'data':{
-                'cap_val':cap_val
+                'cap_val':cap_val,
+                'type':type
             },
             'success':function (data) {
                 if(data.code==200){
@@ -21,8 +40,6 @@ $(function(){
                    $('#cap-icon').removeClass('i-success glyphicon-ok-sign')
                         .addClass('i-fail glyphicon-remove-sign');
                 }
-
-
             }
         })
         }else {
