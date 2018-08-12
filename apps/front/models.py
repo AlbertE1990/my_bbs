@@ -172,3 +172,6 @@ class FrontUser(db.Model):
 
 
 
+
+
+

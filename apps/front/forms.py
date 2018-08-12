@@ -7,6 +7,7 @@ from flask import session
 from .models import FrontUser
 
 
+<<<<<<< HEAD
 class SignupForm(FlaskForm):
     telephone = StringField('电话',validators=[Regexp(r"1[345789]\d{9}",message='请输入正确的手机号码！')])
     username = StringField('用户名',validators=[Length(min=2,max=20,message='用户名长度为2-20个字符！')])
@@ -15,6 +16,14 @@ class SignupForm(FlaskForm):
     email = StringField('邮箱',validators=[Email()])
     graph_captcha = StringField('验证码',validators=[Regexp(r"[0-9a-zA-Z]{4}",message='验证码格式错误！')])
     submit = SubmitField('注册')
+=======
+class SignupForm(BaseForm):
+    telephone = StringField(validators=[Regexp(r"1[345789]\d{9}",message='请输入正确的手机号码！')])
+    username = StringField(validators=[Length(min=2,max=20,message='用户名长度为2-20个字符！')])
+    password1 = StringField(validators=[Length(min=6,max=20,message='密码长度为6-20个字符！')])
+    password2 = StringField(validators=[EqualTo('password1',message='两次密码不相等')])
+    graph_captcha = StringField(validators=[Regexp(r"[0-9a-zA-Z]{4}",message='验证码格式错误！')])
+>>>>>>> 2169baf15ecca7fe5c3b543a9fcf53d7ed1c7169
 
     def validate_graph_captcha(self,field):
         graph_captcha = field.data
