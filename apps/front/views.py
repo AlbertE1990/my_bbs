@@ -173,7 +173,6 @@ class ResetPwdView(views.MethodView):
         return redirect(url_for('.resetpwd'))
 
 
-<<<<<<< HEAD
 #未确认邮箱，拦截页面，等待从新发送确认邮件
 @bp.route('/unconfirm/')
 @login_required
@@ -210,9 +209,6 @@ def confirm(token):
 @bp.route('/middle/')
 def middle():
     return render_template('front/middle.html')
-=======
-#确认邮件
->>>>>>> 2169baf15ecca7fe5c3b543a9fcf53d7ed1c7169
 
 
 
@@ -423,15 +419,6 @@ def followers(uid):
     user = FrontUser.query.get_or_404(uid)
     user_followers = user.followers
     pass
-<<<<<<< HEAD
-=======
-
-
-
-
->>>>>>> 2169baf15ecca7fe5c3b543a9fcf53d7ed1c7169
-
-
 
 
 bp.add_url_rule('/signup/',view_func=SignupView.as_view('signup'))
