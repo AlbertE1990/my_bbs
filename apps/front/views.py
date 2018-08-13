@@ -289,7 +289,26 @@ class ApostView(views.MethodView):
 
 
 #修改帖子
+class UpostView(views.MethodView):
+    decorators = [login_required]
+    def get(self,post_id):
+        post = PostModel.query.get_or_404(post_id)
+        boards = BoardModel.query.all()
+        return render_template('front/front_upost.html',boards=boards,post=post)
 
+    def post(self):
+        form = AddPostForm(request.form)
+        if form.validate():
+            title = form.title.data
+            content = form.content.data
+            board_id = form.board_id.data
+            post = PostModel(title=title,content=content,board_id=board_id)
+            post.author = g.front_user
+            db.session.add(post)
+            db.session.commit()
+            return restful.success('帖子发布成功！')
+        else:
+            return restful.params_error(form.get_error())
 
 
 #帖子详情页面
@@ -425,4 +444,6 @@ bp.add_url_rule('/signup/',view_func=SignupView.as_view('signup'))
 bp.add_url_rule('/login/',view_func=LoginView.as_view('login'))
 bp.add_url_rule('/apost/',view_func=ApostView.as_view('apost'))
 bp.add_url_rule('/resetpwd/',view_func=ResetPwdView.as_view('resetpwd'))
+bp.add_url_rule('/upost/<post_id>',view_func=UpostView.as_view('upost'))
+
 
