@@ -7,10 +7,11 @@ from .models import FrontUser
 from exts import db,login_manager,mail
 from .decorators import login_required
 from config import FRONT_USER_ID,PER_PAGE
-from ..models import BannerModel,BoardModel,PostModel,CommentModel
+from ..models import BannerModel,BoardModel,PostModel,CommentModel,HighlightPostModel
 from io import BytesIO
 from flask_paginate import Pagination,get_page_parameter
 from apps.email import send_email
+from sqlalchemy import func
 
 bp = Blueprint('front',__name__)
 
@@ -26,7 +27,7 @@ def read_count(post):
 @bp.route('/')
 def index():
     board_id = request.args.get('bd',type=int,default=0)
-    order_id = request.args.get('order',type=int,default=0)
+    sort = request.args.get('sort',type=int,default=0)
     page = request.args.get(get_page_parameter(),type=int,default=1)
     start = (page-1)*PER_PAGE
     end = start + PER_PAGE
@@ -35,16 +36,26 @@ def index():
 
     if board_id:
         query_obj = PostModel.query.filter_by(board_id=board_id)
-        if order_id==1:
-            query_obj = query_obj.group_by(PostModel.highlight)
-        elif order_id ==2:
-            #genggai
-            query_obj = query_obj.group_by(PostModel.highlight)
-        elif order_id == 3:
-            query_obj = query_obj.group_by(PostModel.highlight)
-
     else:
         query_obj = PostModel.query
+        board_id = 0
+
+    #按默认排序
+    if sort == 0:
+        pass
+    #按帖子加精排序
+    elif sort == 1:
+        query_obj = query_obj.outerjoin(HighlightPostModel).order_by(
+            HighlightPostModel.create_time.desc(), PostModel.create_time.desc())
+    #按点赞最多排序
+    elif sort ==2:
+        pass
+    # 按评论最多排序
+    elif sort == 3:
+        query_obj = query_obj.outerjoin(CommentModel).group_by(PostModel.id).order_by(
+            func.count(CommentModel.id).desc(),PostModel.create_time.desc())
+
+
     posts = query_obj.slice(start, end)
     total = query_obj.count()
     pagination = Pagination(page=page,total=total,bs_version=3)
@@ -53,7 +64,9 @@ def index():
         'banners':banners,
         'boards':boards,
         'posts':posts,
-        'pagination':pagination
+        'pagination':pagination,
+        'current_board':board_id,
+        'current_sort':sort
     }
     return render_template('front/front_index.html',**context)
 
@@ -173,8 +186,6 @@ class ResetPwdView(views.MethodView):
         return redirect(url_for('.resetpwd'))
 
 
-<<<<<<< HEAD
-#未确认邮箱，拦截页面，等待从新发送确认邮件
 @bp.route('/unconfirm/')
 @login_required
 def unconfirm():
@@ -210,11 +221,6 @@ def confirm(token):
 @bp.route('/middle/')
 def middle():
     return render_template('front/middle.html')
-=======
-#确认邮件
->>>>>>> 2169baf15ecca7fe5c3b543a9fcf53d7ed1c7169
-
-
 
 #重置密码
 @bp.route('/resetpwd/<token>',methods=['GET', 'POST'])
@@ -423,15 +429,6 @@ def followers(uid):
     user = FrontUser.query.get_or_404(uid)
     user_followers = user.followers
     pass
-<<<<<<< HEAD
-=======
-
-
-
-
->>>>>>> 2169baf15ecca7fe5c3b543a9fcf53d7ed1c7169
-
-
 
 
 bp.add_url_rule('/signup/',view_func=SignupView.as_view('signup'))

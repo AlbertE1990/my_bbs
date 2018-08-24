@@ -2,26 +2,57 @@ $(function(){
 
     //格式化字符串
     String.prototype.format = function(args) {
-    var result = this;
-    if (arguments.length < 1) {
-        return result;
-    }
-
-    var data = arguments;       //如果模板参数是数组
-    if (arguments.length == 1 && typeof (args) == "object") {
-        //如果模板参数是对象
-        data = args;
-    }
-    for (var key in data) {
-        var value = data[key];
-        if (undefined != value) {
-            result = result.replace("{" + key + "}", value);
+        if (arguments.length > 0)
+        {
+            var result = this;
+            if (arguments.length == 1 && typeof (args) == "object")
+            {
+                for (var key in args)
+                {
+                    var reg = new RegExp("({" + key + "})", "g");
+                    result = result.replace(reg, args[key]);
+                }
+            }
+            else
+            {
+                for (var i = 0; i < arguments.length; i++)
+                {
+                    if (arguments[i] == undefined)
+                    {
+                        return "";
+                    }
+                    else
+                    {
+                        var reg = new RegExp("({[" + i + "]})", "g");
+                        result = result.replace(reg, arguments[i]);
+                    }
+                }
+            }
+            return result;
         }
-    }
-    return result;
+        else
+        {
+            return this;
+        }
     };
 
+
     //从网页链接获取版块id
+    function get_sort() {
+        var current_url = location.href;
+        var p = /sort=(\d)/;
+        var sort_reg = p.exec(current_url);
+
+        if (sort_reg){
+            var sort = parseInt(sort_reg[1])
+        }else{
+            sort=0
+        }
+        return sort
+
+    };
+
+    //从网页链接获取sort
     function get_board_id() {
         var current_url = location.href;
         var p = /bd=(\d)/;
@@ -35,22 +66,27 @@ $(function(){
         return board_id
 
     };
-
+    //给板块加上active
     var bd = $('.list-group ');
     var board = get_board_id();
 
     var current_bd = bd.find('a[board={0}]'.format(board));
     current_bd.siblings().removeClass('active');
     current_bd.addClass('active');
+    //
+    //给分类加上active
+    var current_sort =  get_sort();
+    console.log(current_sort);
+    $(".post-sort ").find('li[sort={0}]'.format(current_sort)).addClass('active');
 
-
+    //点击分类按钮
     $('.post-head li').click(function (e) {
         e.preventDefault();
       $(this).siblings().removeClass('active');
       $(this).addClass('active');
-      var order = $(this).attr('order');
+      var sort = $(this).attr('sort');
       var board = get_board_id();
-      location.href = '/?bd={0}&order={1}'.format(board,order)
+      location.href = '/?bd={0}&sort={1}'.format(board,sort)
 
 
     });

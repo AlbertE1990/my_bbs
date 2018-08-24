@@ -69,11 +69,11 @@
         <!-- 帖子列表-->
         <div class="post-group box">
           <div class="post-head text-center">
-            <ul class="">
-              <li order='0' class="active" id="post-n"><a href="javascript:void(0)">最新</a></li>
-              <li order='1' id="post-h"><a href="javascript:void(0)">精华帖子</a></li>
-              <li order='2' id="post-p"><a href="javascript:void(0)">点赞最多</a></li>
-              <li order='3' id="post-c"><a href="javascript:void(0)">评论最多</a></li>
+            <ul class="post-sort">
+              <li sort='0' id="post-n"><a href="javascript:void(0)">最新</a></li>
+              <li sort='1' id="post-h"><a href="javascript:void(0)">精华帖子</a></li>
+              <li sort='2' id="post-p"><a href="javascript:void(0)">点赞最多</a></li>
+              <li sort='3' id="post-c"><a href="javascript:void(0)">评论最多</a></li>
             </ul>
           </div>
           <div class="post-list-group">
@@ -93,6 +93,12 @@
                       <span>阅读：{{ post|read_count }}</span>
                     </div>
                   </div>
+                  {% if post.highlight %}
+                    <div>
+                        <span class="label label-danger">精华帖</span>
+                    </div>
+                  {% endif %}
+
                 </li>
               {% endfor %}
             </ul>
@@ -110,7 +116,7 @@
             <a class="btn btn-warning btn-block" href="{{ url_for('front.apost') }}">发布帖子</a>
           </div>
           <div class="list-group">
-            <a href="/" class="list-group-item " board="0">所有版块</a>
+            <a href="{{ url_for('front.index',bd=0) }}" class="list-group-item " board="0">所有版块</a>
             {% for board in boards %}
               <a href="{{ url_for('front.index',bd=board.id) }}" class="list-group-item " board="{{ board.id }}">{{ board.name }}</a>
             {% endfor %}
