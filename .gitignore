@@ -1,5 +1,11 @@
 ﻿# Python:
+*.pyc
 *.py[cod]
 *.so
 *.egg
 *.egg-info
+.idea
+*.xml
+*.iml
+/migrations/
+migrations

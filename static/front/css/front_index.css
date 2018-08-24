@@ -109,3 +109,8 @@
     padding:0 15px;
 }
 /*=S 帖子内容 */
+
+form.form{
+    width:800px;
+    margin: 0 auto;
+}

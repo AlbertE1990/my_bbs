@@ -35,6 +35,9 @@
                 <span class="glyphicon glyphicon-star" data-book="unbook" title="取消收藏"></span>
                 {% endif %}
               </a>
+              {% if post.author == user %}
+                <a href={{ url_for('.upost',post_id=post.id) }}>编辑</a>
+              {% endif %}
 
 
             </div>
@@ -110,7 +113,7 @@
       <div class="col-md-3">
         <div class="author-info-group box">
           <div class="author-avatar">
-            <img class="img-circle" style="width: 100px;height: 100px;" src="{{ post.author.avatar|default(static('front/mt.jpg'),boolean=True) }}" alt="">
+            <img class="img-circle" style="width: 100px;height: 100px;" src="{{ post.author.get_avatar()|default(static('front/mt.jpg'),boolean=True) }}" alt="">
             <div class="author-msg">
               <span>{{ post.author.username }}</span>
             </div>

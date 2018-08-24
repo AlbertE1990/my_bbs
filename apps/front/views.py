@@ -186,6 +186,7 @@ class ResetPwdView(views.MethodView):
         return redirect(url_for('.resetpwd'))
 
 
+#未确认邮箱，拦截页面，等待从新发送确认邮件
 @bp.route('/unconfirm/')
 @login_required
 def unconfirm():
@@ -221,6 +222,7 @@ def confirm(token):
 @bp.route('/middle/')
 def middle():
     return render_template('front/middle.html')
+
 
 #重置密码
 @bp.route('/resetpwd/<token>',methods=['GET', 'POST'])
@@ -299,7 +301,48 @@ class ApostView(views.MethodView):
 
 
 #修改帖子
+# class UpostView(views.MethodView):
+#     decorators = [login_required]
+#     def get(self,post_id):
+#         post = PostModel.query.get_or_404(post_id)
+#         boards = BoardModel.query.all()
+#         return render_template('front/front_upost.html',boards=boards,post=post)
+#
+#     def post(self,post_id):
+#         form = AddPostForm(request.form)
+#         if form.validate():
+#             post = PostModel.query.get_or_404(post_id)
+#             title = form.title.data
+#             content = form.content.data
+#             board_id = form.board_id.data
+#             post.title = title
+#             post.board_id = board_id
+#             post.content = content
+#             db.session.add(post)
+#             db.session.commit()
+#             return restful.success('帖子修改成功！')
+#         else:
+#             return restful.params_error(form.get_error())
 
+@bp.route('/upost/<post_id>',methods=['get','post'])
+@login_required
+def upost(post_id):
+    post = PostModel.query.get_or_404(post_id)
+    if not post.author == g.front_user:
+        return render_template('front/front_error.html',error_msg='您无权修改此帖子'),403
+    boards = BoardModel.query.all()
+    form = AddPostForm()
+    if form.validate_on_submit():
+        title = form.title.data
+        content = form.content.data
+        board_id = form.board_id.data
+        post.title = title
+        post.board_id = board_id
+        post.content = content
+        db.session.add(post)
+        db.session.commit()
+        return restful.success('帖子修改成功！')
+    return render_template('front/front_upost.html',boards=boards,post=post)
 
 
 #帖子详情页面
@@ -345,6 +388,7 @@ def add_comment():
 
 #收藏帖子
 @bp.route('/mark/')
+@login_required
 def mark():
     pid = request.args.get('post_id')
     book_status = request.args.get('book_status')
@@ -435,4 +479,6 @@ bp.add_url_rule('/signup/',view_func=SignupView.as_view('signup'))
 bp.add_url_rule('/login/',view_func=LoginView.as_view('login'))
 bp.add_url_rule('/apost/',view_func=ApostView.as_view('apost'))
 bp.add_url_rule('/resetpwd/',view_func=ResetPwdView.as_view('resetpwd'))
+# bp.add_url_rule('/upost/<post_id>',view_func=UpostView.as_view('upost'))
+
 
