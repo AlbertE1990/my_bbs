@@ -15,7 +15,8 @@ from apps.models import BoardModel,PostModel,HighlightPostModel,BannerModel
 from flask_paginate import get_page_parameter,Pagination
 from apps.front.models import FrontUser
 
-bp = Blueprint('cms',__name__,url_prefix='/cms')
+# bp = Blueprint('cms',__name__,url_prefix='/cms')
+bp = Blueprint('cms',__name__)
 
 base_path = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 
@@ -23,6 +24,8 @@ base_path = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 @login_manager.user_loader
 def load_user(user_id):
     return CMSUser.query.get(user_id)
+
+
 @bp.route('/')
 @login_required
 def index():

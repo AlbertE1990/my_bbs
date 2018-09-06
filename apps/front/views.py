@@ -5,7 +5,7 @@ from utils.my_redis import cache
 from .forms import SignupForm,LoginForm,AddPostForm,AddCommentForm,PasswordResetRequestForm,PasswordResetForm
 from .models import FrontUser
 from exts import db,login_manager,mail
-from .decorators import login_required
+from flask_login import login_required,current_user
 from config import FRONT_USER_ID,PER_PAGE
 from ..models import BannerModel,BoardModel,PostModel,CommentModel,HighlightPostModel
 from io import BytesIO
@@ -14,6 +14,12 @@ from apps.email import send_email
 from sqlalchemy import func
 
 bp = Blueprint('front',__name__)
+# bp = Blueprint('front',__name__)
+
+
+@login_manager.user_loader
+def load_user(user_id):
+    return FrontUser.query.get(user_id)
 
 
 @bp.app_template_filter('read_count')
@@ -197,7 +203,7 @@ def unconfirm():
 @bp.route('/reconfirm/')
 @login_required
 def resend_confirmation():
-    if send_confirm(g.front_user,g.front_user.email):
+    if send_confirm(current_user,current_user.email):
         flash('确认账户链接已发送到你邮箱，请注意查收')
     else:
         flash('邮件发送失败')
@@ -208,9 +214,9 @@ def resend_confirmation():
 @bp.route('/confirm/<token>')
 @login_required
 def confirm(token):
-    if g.front_user.confirm:
+    if current_user.confirm:
         flash('账户已经确认，无需重复确认，谢谢！')
-    if g.front_user.confirm_token(token):
+    if current_user.confirm_token(token):
         flash('账户确认成功，谢谢！')
         db.session.commit()
     else:
@@ -292,7 +298,7 @@ class ApostView(views.MethodView):
             content = form.content.data
             board_id = form.board_id.data
             post = PostModel(title=title,content=content,board_id=board_id)
-            post.author = g.front_user
+            post.author = current_user
             db.session.add(post)
             db.session.commit()
             return restful.success('帖子发布成功！')
@@ -328,7 +334,7 @@ class ApostView(views.MethodView):
 @login_required
 def upost(post_id):
     post = PostModel.query.get_or_404(post_id)
-    if not post.author == g.front_user:
+    if not post.author == current_user:
         return render_template('front/front_error.html',error_msg='您无权修改此帖子'),403
     boards = BoardModel.query.all()
     form = AddPostForm()
@@ -439,19 +445,17 @@ def myposts(uid):
 
 #关注用户
 @bp.route('/follow/<uid>')
-@login_required
 def follow(uid):
-    current_user = g.front_user
+    current_user = g.get('front_user')
+    if not current_user:
+        return restful.unauth_error('请先登录')
     user = FrontUser.query.get(uid)
     if not user:
-        print('当前用户不存在')
         return restful.params_error('当前用户不存在')
     if current_user.is_following(user):
-        print('已经关注该用户')
         return restful.params_error('已经关注该用户')
     current_user.follow(user)
     db.session.commit()
-    print('关注成功')
     return restful.success('关注成功')
 
 #取消关注
@@ -461,9 +465,9 @@ def unfollow(uid):
     user = FrontUser.query.get(uid)
     if not user:
         return restful.params_error('当前用户不存在')
-    if not g.front_user.is_following(user):
+    if not current_user.is_following(user):
         return restful.params_error('您还没有关注该用户')
-    g.front_user.unfollow(user)
+    current_user .unfollow(user)
     db.session.commit()
     return restful.success('取消关注成功')
 

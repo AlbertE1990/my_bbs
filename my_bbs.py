@@ -8,10 +8,11 @@ from exts import db,mail,login_manager,moment,bootstrap
 
 def create_app():
     app = Flask(__name__)
-    app.register_blueprint(cms_bp)
-    app.register_blueprint(front_bp)
+    app.register_blueprint(cms_bp,prefix='cms')
+    app.register_blueprint(front_bp,prefix='front')
     login_manager.init_app(app)
     app.config.from_object(config)
+    # app.url_map.default_subdomain = 'www'
     db.init_app(app)
     mail.init_app(app)
     CSRFProtect(app)
@@ -22,4 +23,4 @@ def create_app():
 app = create_app()
 
 if __name__ == '__main__':
-    app.run(port=8000)
+    app.run(host='0.0.0.0',port=8000)

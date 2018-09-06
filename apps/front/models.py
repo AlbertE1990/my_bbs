@@ -10,6 +10,36 @@ from random import choice,randint
 import json
 
 
+class Permission():
+    #所有权限
+    ALL_PERMISSION   = 0b111111111111
+    #1.前端登录
+    LOGIN            = 0b000000000001
+    #2.查看帖子
+    VIEW_POST        = 0b000000000010
+    #3.发表帖子
+    PUBLISH_POST     = 0b000000000100
+    #4.发表评论
+    PUBLISH_COMMENT  = 0b000000001000
+
+    #5.后台登录
+    LOGIN_CMS        = 0b000000010000
+    # 6.管理帖子
+    MANAGE_POST      = 0b000000100000
+    # 7.管理评论
+    MANAGE_COMMENTER = 0b000001000000
+    # 8.管理板块
+    BOARDER          = 0b000010000000
+    #9.管理轮播图
+    BANNER           = 0b000100000000
+    #10.管理前台用户的权限
+    FRONTUSER        = 0b001000000000
+    #11.管理后台用户的权限
+    CMSUSER          = 0b010000000000
+    #12.超级管理员
+    ADMINER          = 0b100000000000
+
+
 class GenderEnum(enum.Enum):
     MALE = 1
     FMALE = 2
@@ -45,6 +75,7 @@ class FrontUser(db.Model):
     signature = db.Column(db.String(100))
     gender  = db.Column(db.Enum(GenderEnum),default=GenderEnum.UNKNOW)
     join_time = db.Column(db.DATETIME,default=datetime.now)
+    last_seen = db.Column(db.DATETIME,default=datetime.now)
 
     bookmark = db.relationship('PostModel', secondary=BookMark, backref=db.backref('mark_users'))
 
@@ -166,12 +197,63 @@ class FrontUser(db.Model):
         db.session.commit()
         print('Front用户添加成功，共同添加%d个' % n)
 
+    def init_role(self):
+        pass
+
+    def can(self, perm):
+        return self.role is not None and self.role.has_permission(perm)
+
+    def is_administrator(self):
+        return self.can(Permission.ADMINER)
+
+    def ping(self):
+        self.last_seen = datetime.utcnow()
+        db.session.add(self)
 
 
+class Role(db.Model):
+    __tablename__ = 'roles'
+    id = db.Column(db.Integer,primary_key=True,autoincrement=True)
+    u_id = db.Column(db.String(100), db.ForeignKey('front_user.id'))
+    name = db.Column(db.Enum('FrontUser', 'CmsUser','Operator','Administrator'),nullable=False)
+    permissions = db.Column(db.Integer,nullable=False)
+    user = db.relationship('FrontUser', backref=db.backref('role',uselist=False))
 
+    roles = {
+        'FrontUser': [Permission.LOGIN, Permission.VIEW_POST, Permission.PUBLISH_POST,
+                      Permission.PUBLISH_COMMENT],
+        'CmsUser': [Permission.LOGIN, Permission.VIEW_POST, Permission.PUBLISH_POST,
+                    Permission.PUBLISH_COMMENT, Permission.LOGIN_CMS],
+        'Operator': [Permission.LOGIN, Permission.VIEW_POST, Permission.PUBLISH_POST,
+                     Permission.PUBLISH_COMMENT, Permission.LOGIN_CMS, Permission.MANAGE_POST,
+                     Permission.MANAGE_COMMENTER, Permission.BOARDER, Permission.BANNER,
+                     Permission.FRONTUSER],
+        'Administrator': [Permission.ALL_PERMISSION]
+    }
+    default_role = 'FrontUser'
 
+    def __init__(self, **kwargs):
+        super(Role, self).__init__(**kwargs)
+        if self.name is None:
+            self.name = self.default_role
+        if self.permissions is None:
+            self.permissions = sum(self.roles[self.name])
 
+    def add_permission(self, *perms):
+        for perm in perms:
+            if not self.has_permission(perm):
+                self.permissions += perm
 
+    def remove_permission(self, *perms):
+        for perm in perms:
+            if self.has_permission(perm):
+                self.permissions -= perm
 
+    def reset_permissions(self):
+        self.permissions = sum(self.roles[self.default_role])
 
+    def has_permission(self, perm):
+        return self.permissions & perm == perm
 
+    def __repr__(self):
+        return '<Role %r>' % self.name

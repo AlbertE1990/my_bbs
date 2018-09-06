@@ -4,6 +4,7 @@ from exts import db
 from my_bbs import app
 from flask_script import Manager,Shell
 from apps.cms.modles import CMSUser,CMSRole,CMSPermission,CmsRoleUser
+from apps.front.models import FrontUser,Role,Permission
 from random import choice,randint
 import json
 
@@ -61,7 +62,9 @@ def make_shell_context():
                    CMSPermission=CMSPermission,
                    PostModel=PostModel,
                    CommentModel=CommentModel,
-                   FrontUser = FrontUser
+                   FrontUser = FrontUser,
+                   Role = Role,
+                   Permission = Permission
     )
 
     return context

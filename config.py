@@ -42,3 +42,6 @@ PER_PAGE = 10
 
 #CMS
 CMS_PER_PAGE = 10
+
+#
+SERVER_NAME = "www.bat.com:8000"

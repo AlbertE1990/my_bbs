@@ -8,7 +8,7 @@ from flask_bootstrap import Bootstrap
 
 login_manager = LoginManager()
 login_manager.session_protection='strong'
-login_manager.login_view='cms.login'
+login_manager.login_view='front.login'
 
 
 moment = Moment()
