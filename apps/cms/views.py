@@ -1,35 +1,29 @@
 # -*- coding:utf-8 -*-
-from flask import Blueprint,render_template,request,redirect,url_for,g,current_app
+from flask import render_template,request,redirect,url_for,g,current_app,abort
 from flask.views import MethodView
 from .forms import LoginForm,ResetPasswordForm,ProfileForm,ResetEmailForm,validate_email,RegisterForm,AddBannerForm,AddBoardForm
-from .modles import CMSUser,CMSPermission
 from utils import restful,my_redis
-from .decorators import permission
-from exts import db,mail,login_manager
+from exts import db,mail
 import string
 import random
 from apps.email import send_email
-from flask_login import login_required,login_user,logout_user,current_user
+from flask_login import login_user,logout_user,current_user
 import os
 from apps.models import BoardModel,PostModel,HighlightPostModel,BannerModel
 from flask_paginate import get_page_parameter,Pagination
-from apps.front.models import FrontUser
+from ..models import User,Permission,Role
+from .import bp
+from ..decorators import login_required,permission_required
 
-# bp = Blueprint('cms',__name__,url_prefix='/cms')
-bp = Blueprint('cms',__name__)
 
 base_path = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 
 
-@login_manager.user_loader
-def load_user(user_id):
-    return CMSUser.query.get(user_id)
-
-
-@bp.route('/')
-@login_required
-def index():
-    return render_template('cms/main.html')
+@bp.before_request
+def before_request():
+    print("cms before_request:",current_user)
+    if current_user.is_authenticated and not current_user.can(Permission.LOGIN_CMS):
+        abort(403)
 
 
 #登陆
@@ -44,7 +38,7 @@ class LoginView(MethodView):
             email = form.email.data
             password = form.password.data
             remember = form.remember.data
-            user = CMSUser.query.filter_by(email=email).first()
+            user = User.query.filter_by(email=email).first()
             if user and user.check_password(password):
                 login_user(user,remember)
                 return restful.success(message='登录成功!')
@@ -54,6 +48,12 @@ class LoginView(MethodView):
         else:
             print(form.errors)
             return restful.params_error(message= '邮箱或者密码格式错误！')
+
+#首页
+@bp.route('/')
+@login_required
+def index():
+    return render_template('cms/main.html')
 
 
 #注销
@@ -67,10 +67,9 @@ def logout():
 #个人信息
 class ProfileView(MethodView):
     decorators = [login_required]
-    
+
     def get(self):
         return render_template('cms/profile.html')
-
     def post(self):
         #有待优化
         user = current_user._get_current_object()
@@ -171,22 +170,21 @@ def email_captcha():
 #cms用户管理
 @bp.route('/cms_users/')
 @login_required
-@permission(CMSPermission.CMSUSER)
+@permission_required(Permission.CMSUSER)
 def cms_users():
-    users = CMSUser.query.all()
+    users = User.query.outerjoin(Role).filter(Role.name!='FrontUser').order_by(User.join_time.desc()).all()
     return render_template('cms/user_manage.html',users=users)
 
 
 #注册cms用户
-
 def create_user(username,password,email):
-    user = CMSUser(username=username,password=password,email=email)
+    user = User(username=username,password=password,email=email)
     db.session.add(user)
     db.session.commit()
 
 @bp.route('/register/',methods=['post'])
 @login_required
-@permission(CMSPermission.CMSUSER)
+@permission_required(Permission.CMSUSER)
 def register():
     form = RegisterForm(request.form)
     if form.validate():
@@ -203,7 +201,7 @@ def register():
 #帖子管理
 @bp.route('/posts/')
 @login_required
-@permission(CMSPermission.POSTER)
+@permission_required(Permission.MANAGE_POST)
 def posts():
     page = request.args.get(get_page_parameter(), type=int, default=1)
     PER_PAGE  = current_app.config['PER_PAGE']
@@ -274,7 +272,7 @@ def uhpost():
 #评论管理
 @bp.route('/comments/')
 @login_required
-@permission(CMSPermission.COMMENTER)
+@permission_required(Permission.MANAGE_COMMENTE)
 def comments():
     return render_template('cms/comments.html')
 
@@ -282,7 +280,7 @@ def comments():
 #板块管理
 @bp.route('/boards/')
 @login_required
-@permission(CMSPermission.BOARDER)
+@permission_required(Permission.BOARDER)
 def boards():
     boards = BoardModel.query.all()
     return render_template('cms/boards.html',boards=boards)
@@ -336,7 +334,7 @@ def dboard():
 #轮播图管理
 @bp.route('/banners/')
 @login_required
-@permission(CMSPermission.BOARDER)
+@permission_required(Permission.BOARDER)
 def banners():
     banners = BannerModel.query.order_by(BannerModel.priority.desc())
     return render_template('cms/banners.html',banners=banners)
@@ -409,7 +407,7 @@ def fusers():
     PER_PAGE = current_app.config['PER_PAGE']
     start = (page - 1) * PER_PAGE
     end = start + PER_PAGE
-    query_obj = FrontUser.query.order_by(FrontUser.join_time.desc())
+    query_obj = User.query.outerjoin(Role).filter(Role.name=='FrontUser').order_by(User.join_time.desc())
     users = query_obj.slice(start, end)
     total = query_obj.count()
     pagination = Pagination(page=page, total=total, bs_version=3)
@@ -420,14 +418,33 @@ def fusers():
     return render_template('cms/frontuser_manage.html',**context)
 
 
+@bp.route('/permission-manage/')
+@login_required
+def manage_permission():
+    users = User.query.order_by(User.join_time.desc()).all()
+    return render_template('cms/permission_manage.html', users=users)
 
-
-
+@bp.route('/permission/<uid>')
+@login_required
+def permission(uid):
+    user = User.query.get(uid)
+    print(user.username)
+    if not user:
+        return restful.params_error('未查询到此用户')
+    try:
+        data={}
+        permission_items = Permission.__dict__.items()
+        for item in permission_items:
+            if not item[0].startswith('__'):
+                if user.can(item[1]):
+                    data[item[0]]=True
+                else:
+                    data[item[0]]=False
+        return restful.success(data=data)
+    except Exception:
+        return restful.params_error('用户权限获取失败')
 
 bp.add_url_rule('/resetpwd',view_func=ResetPasswordView.as_view('resetpwd'))
 bp.add_url_rule('/resetemail',view_func=ResetEmailView.as_view('resetemail'))
 bp.add_url_rule('/login/',endpoint='login',view_func=LoginView.as_view('login'))
 
-@bp.context_processor
-def context_processor():
-    return{'CMSPermission':CMSPermission}

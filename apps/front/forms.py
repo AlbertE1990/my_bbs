@@ -4,7 +4,7 @@ from wtforms import StringField,BooleanField,IntegerField,SubmitField,PasswordFi
 from wtforms.validators import Regexp,InputRequired,EqualTo,Length,ValidationError,Email
 from utils import my_redis
 from flask import session
-from .models import FrontUser
+from ..models import User
 
 
 class SignupForm(FlaskForm):
@@ -26,24 +26,25 @@ class SignupForm(FlaskForm):
             raise ValidationError('验证码错误')
 
     def validate_email(self,field):
-        user = FrontUser.query.filter_by(email=field.data).first()
+        user = User.query.filter_by(email=field.data).first()
         if user:
             raise ValidationError('该邮箱已经注册')
 
     def validate_telephone(self,field):
-        user = FrontUser.query.filter_by(telephone=field.data).first()
+        user = User.query.filter_by(telephone=field.data).first()
         if user:
             raise ValidationError('该手机已经注册')
 
 
 
 
-class LoginForm(BaseForm):
+class LoginForm(FlaskForm):
 
     telephone = StringField(validators=[Regexp(r"1[345789]\d{9}", message='请输入正确的手机号码！')])
-    password = StringField(validators=[Length(min=6,max=20,message='密码长度为6-20个字符！')])
-    graph_captcha = StringField(validators=[Regexp(r"[0-9a-zA-Z]{4}", message='验证码格式错误！')])
-    remember = BooleanField()
+    password = PasswordField(validators=[Length(min=6,max=20,message='密码长度为6-20个字符！')])
+    graph_captcha = StringField()
+    remember = BooleanField('记住我')
+    submit = SubmitField('登陆')
 
     def validate_graph_captcha(self, field):
         graph_captcha = field.data
@@ -63,7 +64,7 @@ class AddPostForm(FlaskForm):
 class AddCommentForm(BaseForm):
     content = StringField(validators=[InputRequired(message='请输入内容！')])
     post_id = IntegerField(validators=[InputRequired(message='系统没有获取到帖子ID！')])
-    author_id = StringField(validators=[InputRequired(message='系统没有获取到用户ID不！')])
+    # author_id = StringField(validators=[InputRequired(message='系统没有获取到用户ID不！')])
 
 
 #重置密码验证邮箱

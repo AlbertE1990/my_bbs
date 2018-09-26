@@ -20,8 +20,8 @@ FRONT_USER_ID = "you can not guess it"
 
 #设置cookies过期时间,2小时
 # PERMANENT_SESSION_LIFETIME = timedelta(hours=2)
-REMEMBER_COOKIE_DURATION = timedelta(days=7)
-REMEMBER_COOKIE_PATH = '127.0.0.1:8000'
+# REMEMBER_COOKIE_DURATION = timedelta(days=7)
+# REMEMBER_COOKIE_PATH = '127.0.0.1:8000'
 
 #mail
 MAIL_SERVER = "smtp.qq.com"
@@ -44,4 +44,4 @@ PER_PAGE = 10
 CMS_PER_PAGE = 10
 
 #
-SERVER_NAME = "www.bat.com:8000"
+SERVER_NAME = "bat.com:5000"

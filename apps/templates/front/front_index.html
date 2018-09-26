@@ -1,0 +1,130 @@
+{% extends 'front/front_base.html' %}
+{% block title %}首页{% endblock %}
+{% block styles %}
+  {{ super() }}
+  <link rel="stylesheet" href="{{ static('front/css/front_index.css') }}">
+{% endblock %}
+
+{% block scripts %}
+  {{ super() }}
+  <script src="{{ static('front/js/index.js') }}"></script>
+  {{ moment.include_moment() }}
+    <!--使用中文,默认是英语的-->
+　{{ moment.lang("zh-CN") }}
+{% endblock %}
+
+{% block content %}
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-12">
+        <!-- 轮播图-->
+        <div id="carousel" class="carousel slide index-banner" data-ride="carousel">
+          <!-- Indicators -->
+          <ol class="carousel-indicators">
+            {% for banner in banners %}
+              {% if loop.first %}
+                <li data-target="#carousel" data-slide-to="{{ loop.index }}" class="active"></li>
+              {% else %}
+                <li data-target="#carousel" data-slide-to="{{ loop.index }}"></li>
+              {% endif %}
+            {% endfor %}
+          </ol>
+          <!-- Wrapper for slides -->
+          <div class="carousel-inner" role="listbox">
+            {% for banner in banners %}
+              {% if loop.first %}
+                <div class="item active">
+                  <a href="{{ banner.link_url }}" target="_blank">
+                    <img class='img-rounded' src="{{ banner.image_url }}" alt="...">
+                  </a>
+                  <div class="carousel-caption">
+                  </div>
+                </div>
+              {% else %}
+                <div class="item">
+                  <a href="{{ banner.link_url }}" target="_blank">
+                    <img class='img-rounded' src="{{ banner.image_url }}" alt="...">
+                  </a>
+                  <div class="carousel-caption">
+                  </div>
+                </div>
+              {% endif %}
+            {% endfor %}
+          </div>
+          <!-- Controls -->
+          <a class="left carousel-control" href="#carousel" role="button" data-slide="prev">
+            <span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>
+            <span class="sr-only">Previous</span>
+          </a>
+          <a class="right carousel-control" href="#carousel" role="button" data-slide="next">
+            <span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span>
+            <span class="sr-only">Next</span>
+          </a>
+        </div>
+
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-9 ">
+        <!-- 帖子列表-->
+        <div class="post-group box">
+          <div class="post-head text-center">
+            <ul class="post-sort">
+              <li sort='0' id="post-n"><a href="javascript:void(0)">最新</a></li>
+              <li sort='1' id="post-h"><a href="javascript:void(0)">精华帖子</a></li>
+              <li sort='2' id="post-p"><a href="javascript:void(0)">点赞最多</a></li>
+              <li sort='3' id="post-c"><a href="javascript:void(0)">评论最多</a></li>
+            </ul>
+          </div>
+          <div class="post-list-group">
+            <ul class="">
+              {% for post in posts %}
+                <li class="post-list">
+                  <div class="author-avatar-group">
+                    <img class="img-circle" width="50px" height="50px" src="{{ post.author.avatar|default( static('common/images/avatar.jpg'),boolean=True) }}" onerror="javascript:this.src='http://s1.bbs.xiaomi.cn/statics/images/noavatar_small.gif';">
+                  </div>
+                  <div class="post-info-group">
+                    <a href='{{ url_for('front.post_detail',post_id=post.id) }}' class="post-title">{{ post.title }}</a>
+                    <div class="post-info">
+                      <span>作者：{{ post.author.username }}</span>
+                      <span>所属板块：{{ post.board.name }}</span>
+                      <span>发布时间：{{ moment(post.create_time).fromNow() }}</span>
+                      <span>评论：{{ post.comments|length }}</span>
+                      <span>阅读：{{ post|read_count }}</span>
+                    </div>
+                  </div>
+                  {% if post.highlight %}
+                    <div>
+                        <span class="label label-danger">精华帖</span>
+                    </div>
+                  {% endif %}
+
+                </li>
+              {% endfor %}
+            </ul>
+            <div class="post-pagination text-center">
+              {{ pagination.links }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-3 ">
+        <!-- 板块-->
+        <div class="">
+          <div>
+            <a class="btn btn-warning btn-block" href="{{ url_for('front.apost') }}">发布帖子</a>
+          </div>
+          <div class="list-group">
+            <a href="{{ url_for('front.index',bd=0) }}" class="list-group-item " board="0">所有版块</a>
+            {% for board in boards %}
+              <a href="{{ url_for('front.index',bd=board.id) }}" class="list-group-item " board="{{ board.id }}">{{ board.name }}</a>
+            {% endfor %}
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+{% endblock %}

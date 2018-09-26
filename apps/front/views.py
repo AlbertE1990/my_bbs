@@ -1,25 +1,19 @@
-from flask import  Blueprint,views,render_template,url_for,make_response,g,request,session,redirect,abort,flash
+from flask import views,render_template,url_for,make_response,g,request,session,redirect,abort,flash
 from utils.captcha import Captcha
 from utils import my_redis,restful
 from utils.my_redis import cache
 from .forms import SignupForm,LoginForm,AddPostForm,AddCommentForm,PasswordResetRequestForm,PasswordResetForm
-from .models import FrontUser
-from exts import db,login_manager,mail
-from flask_login import login_required,current_user
+from ..models import User,Permission
+from exts import db,mail
+from flask_login import current_user,login_user
 from config import FRONT_USER_ID,PER_PAGE
 from ..models import BannerModel,BoardModel,PostModel,CommentModel,HighlightPostModel
 from io import BytesIO
 from flask_paginate import Pagination,get_page_parameter
 from apps.email import send_email
 from sqlalchemy import func
-
-bp = Blueprint('front',__name__)
-# bp = Blueprint('front',__name__)
-
-
-@login_manager.user_loader
-def load_user(user_id):
-    return FrontUser.query.get(user_id)
+from . import bp
+from ..decorators import permission_required,login_required
 
 
 @bp.app_template_filter('read_count')
@@ -101,7 +95,7 @@ class SignupView(views.MethodView):
             username = form.username.data
             password = form.password1.data
             email = form.email.data
-            user = FrontUser(telephone=telephone, username=username, password=password, email=email)
+            user = User(telephone=telephone, username=username, password=password, email=email)
             print(user)
             # db.session.add(user)
             # token = user.generate_comfirmation_token()
@@ -128,7 +122,7 @@ def signup2():
         username = form.username.data
         password = form.password1.data
         email = form.email.data
-        user = FrontUser(telephone=telephone,username=username,password=password,email=email)
+        user = User(telephone=telephone,username=username,password=password,email=email)
         db.session.add(user)
         db.session.commit()
         session[FRONT_USER_ID] = user.id
@@ -139,33 +133,44 @@ def signup2():
 
 
 #登录视图函数
-class LoginView(views.MethodView):
+# class LoginView(views.MethodView):
+#
+#     def get(self):
+#         return_to = request.referrer
+#         current_url = request.url
+#         form = LoginForm()
+#         return render_template('front/front_login.html',return_to=return_to,form=form)
+#
+#     def post(self):
+#         form = LoginForm(request.form)
+#         if form.validate():
+#             telephone = form.telephone.data
+#             password = form.password.data
+#             remember = form.remember.data
+#             user = User.query.filter_by(telephone=telephone).first()
+#             if user:
+#                 if user.check_password(password):
+#                     login_user(user, bool(remember))
+#                     return redirect(url_for('.index'))
 
-    def get(self):
-        return_to = request.referrer
-        current_url = request.url
-        return render_template('front/front_login.html',return_to=return_to)
 
-    def post(self):
-        form = LoginForm(request.form)
-        if form.validate():
-            telephone = form.telephone.data
-            password = form.password.data
-            remember = form.remember.data
-            user = FrontUser.query.filter_by(telephone=telephone).first()
-            if user:
-                if user.check_password(password):
-                    session[FRONT_USER_ID] = user.id
-                    session.permanent = bool(remember)
-                    return restful.success()
-                else:
-                    return restful.params_error('密码错误')
+@bp.route('/login/', methods=['GET', 'POST'])
+def login():
+    form = LoginForm()
+    if form.validate_on_submit():
+        user = User.query.filter_by(telephone=form.telephone.data).first()
+        if user is not None and user.check_password(form.password.data):
+            if user.can(Permission.LOGIN):
+                login_user(user, form.remember.data)
+                next = request.args.get('next')
+                if next is None or not next.startswith('/'):
+                    next = url_for('.index')
+                return redirect(next)
             else:
-                return restful.params_error('此手机号码未注册！')
-
+                flash('此账号已经被禁止登陆')
         else:
-            print(form.errors)
-            return restful.params_error()
+            flash('账号或者密码错误')
+    return render_template('front/front_login.html', form=form)
 
 
 #重置密码验证邮箱
@@ -179,7 +184,7 @@ class ResetPwdView(views.MethodView):
         form = PasswordResetRequestForm(request.form)
         if form.validate:
             email = form.email.data
-            user = FrontUser.query.filter_by(email=email).first()
+            user = User.query.filter_by(email=email).first()
             if user:
                 token = user.generate_reset_token()
                 my_redis.set(token,'Enable')
@@ -239,7 +244,7 @@ def password_reset(token):
     form = PasswordResetForm()
     if form.validate_on_submit():
         new_password = form.password.data
-        if FrontUser.reset_password(token,new_password) and my_redis.get(token):
+        if User.reset_password(token,new_password) and my_redis.get(token):
             db.session.commit()
             flash('密码重置成功')
             my_redis.delete(token)
@@ -275,7 +280,7 @@ def gene_captcha():
 
 #检测验证码
 @bp.route('/captcha/check/')
-def check_captcha():       
+def check_captcha():
     cap_type = request.args.get('type')
     cap_val = request.args.get('cap_val')
     if cap_val.lower() == session.get(cap_type).lower():
@@ -286,7 +291,7 @@ def check_captcha():
 
 #添加帖子视图函数
 class ApostView(views.MethodView):
-    decorators = [login_required]
+    decorators = [permission_required(Permission.PUBLISH_POST),login_required]
     def get(self):
         boards = BoardModel.query.all()
         return render_template('front/front_apost.html',boards=boards)
@@ -307,34 +312,12 @@ class ApostView(views.MethodView):
 
 
 #修改帖子
-# class UpostView(views.MethodView):
-#     decorators = [login_required]
-#     def get(self,post_id):
-#         post = PostModel.query.get_or_404(post_id)
-#         boards = BoardModel.query.all()
-#         return render_template('front/front_upost.html',boards=boards,post=post)
-#
-#     def post(self,post_id):
-#         form = AddPostForm(request.form)
-#         if form.validate():
-#             post = PostModel.query.get_or_404(post_id)
-#             title = form.title.data
-#             content = form.content.data
-#             board_id = form.board_id.data
-#             post.title = title
-#             post.board_id = board_id
-#             post.content = content
-#             db.session.add(post)
-#             db.session.commit()
-#             return restful.success('帖子修改成功！')
-#         else:
-#             return restful.params_error(form.get_error())
-
 @bp.route('/upost/<post_id>',methods=['get','post'])
 @login_required
+@permission_required(Permission.PUBLISH_POST)
 def upost(post_id):
     post = PostModel.query.get_or_404(post_id)
-    if not post.author == current_user:
+    if post.author != current_user and not current_user.can(Permission.MANAGE_POST):
         return render_template('front/front_error.html',error_msg='您无权修改此帖子'),403
     boards = BoardModel.query.all()
     form = AddPostForm()
@@ -377,14 +360,15 @@ def post_detail(post_id):
 
 
 #发表评论
-@bp.route('/acomment/',methods=['Post'])
+@bp.route('/acomment/',methods=['POST'])
 @login_required
+@permission_required(Permission.PUBLISH_COMMENT)
 def add_comment():
     form = AddCommentForm(request.form)
     if form.validate():
         content = form.content.data
         post_id = form.post_id.data
-        author_id = form.author_id.data
+        author_id = current_user.id
         comment = CommentModel(content=content,post_id=post_id,author_id=author_id)
         db.session.add(comment)
         db.session.commit()
@@ -392,64 +376,60 @@ def add_comment():
     else:
         return restful.params_error(form.get_error())
 
-#收藏帖子
+
 @bp.route('/mark/')
 @login_required
 def mark():
     pid = request.args.get('post_id')
     book_status = request.args.get('book_status')
-    user = g.get('front_user')
-    if not user:
-        return restful.params_error('请先登陆！')
     post = PostModel.query.get(pid)
     if post:
         if book_status == 'book':
-            user.bookmark.append(post)
-            db.session.add(user)
+            current_user.bookmark.append(post)
+            db.session.add(current_user._get_current_object())
             db.session.commit()
             return restful.success('收藏成功')
-        else:
-            print(user.bookmark)
-            user.bookmark.remove(post)
-            db.session.add(user)
+        elif book_status == 'unbook':
+            current_user.bookmark.remove(post)
+            db.session.add(current_user._get_current_object())
             db.session.commit()
             return restful.success('取消收藏成功')
+        else:
+            return restful.params_error('未识别状态参数')
     else:
         return restful.params_error('未找到该帖子！')
 
 #个人信息
 @bp.route('/profile/<uid>/')
 def profile(uid):
-    user = FrontUser.query.get(uid)
+    user = User.query.get(uid)
     if not uid:
         abort(404)
-    return render_template('front/profile.html',cuser=user)
+    return render_template('front/profile.html',user=user)
 
 #显示书签收藏信息
 @bp.route('/bookmark/<uid>/')
 def bookmark(uid):
-    user = FrontUser.query.get(uid)
+    user = User.query.get(uid)
     if not user:
         abort(404)
     posts = user.bookmark
-    return render_template('front/bookmark.html', cuser=user,posts=posts)
+    return render_template('front/bookmark.html', user=user,posts=posts)
 
 #我的帖子
 @bp.route('/myposts/<uid>/')
 def myposts(uid):
-    user = FrontUser.query.get(uid)
+    user = User.query.get(uid)
     if not user:
         abort(404)
     posts = user.posts
-    return render_template('front/myposts.html', cuser=user,posts=posts)
+    return render_template('front/myposts.html', user=user,posts=posts)
 
 #关注用户
 @bp.route('/follow/<uid>')
+@login_required
 def follow(uid):
-    current_user = g.get('front_user')
-    if not current_user:
-        return restful.unauth_error('请先登录')
-    user = FrontUser.query.get(uid)
+    user = User.query.get(uid)
     if not user:
         return restful.params_error('当前用户不存在')
     if current_user.is_following(user):
@@ -462,7 +442,7 @@ def follow(uid):
 @bp.route('/unfollow/<uid>')
 @login_required
 def unfollow(uid):
-    user = FrontUser.query.get(uid)
+    user = User.query.get(uid)
     if not user:
         return restful.params_error('当前用户不存在')
     if not current_user.is_following(user):
@@ -474,15 +454,60 @@ def unfollow(uid):
 #显示关注着
 @bp.route('/followers/<uid>')
 def followers(uid):
-    user = FrontUser.query.get_or_404(uid)
+    user = User.query.get_or_404(uid)
     user_followers = user.followers
     pass
 
 
 bp.add_url_rule('/signup/',view_func=SignupView.as_view('signup'))
-bp.add_url_rule('/login/',view_func=LoginView.as_view('login'))
+# bp.add_url_rule('/login/',view_func=LoginView.as_view('login'))
 bp.add_url_rule('/apost/',view_func=ApostView.as_view('apost'))
 bp.add_url_rule('/resetpwd/',view_func=ResetPwdView.as_view('resetpwd'))
 # bp.add_url_rule('/upost/<post_id>',view_func=UpostView.as_view('upost'))
 
+
+#删除评论
+@bp.route('/dcomment/<cid>')
+@login_required
+@permission_required(Permission.MANAGE_COMMENTE)
+def delete_comment(cid):
+    comment = CommentModel.query.get_or_404(cid)
+    comment.disabled = True
+    db.session.add(comment)
+    db.session.commit()
+    return redirect(request.referrer)
+
+#恢复评论
+@bp.route('/undcomment/<cid>')
+@login_required
+@permission_required(Permission.MANAGE_COMMENTE)
+def undelete_comment(cid):
+    comment = CommentModel.query.get_or_404(cid)
+    comment.disabled = False
+    db.session.add(comment)
+    db.session.commit()
+    return redirect(request.referrer)
+
+#帖子加精
+@bp.route('/hpost/<pid>')
+@login_required
+@permission_required(Permission.MANAGE_POST)
+def hpost(pid):
+    post = PostModel.query.get_or_404(pid)
+    highlight = HighlightPostModel()
+    post.highlight = highlight
+    db.session.add(post)
+    db.session.commit()
+    return redirect(request.referrer)
+
+
+#帖子取消加精
+@bp.route('/uhpost/<pid>')
+@login_required
+@permission_required(Permission.MANAGE_POST)
+def unhpost(pid):
+    highlight = HighlightPostModel.query.filter_by(post_id=pid).first()
+    db.session.delete(highlight)
+    db.session.commit()
+    return redirect(request.referrer)
 

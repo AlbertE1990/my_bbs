@@ -1,4 +1,9 @@
 # -*- coding:utf-8 -*-
-from .views import bp
-from . import errors
-from . import hooks
+from flask import Blueprint
+
+
+bp = Blueprint('cms',__name__,subdomain='cms')
+
+# bp = Blueprint('cms',__name__,url_prefix='/cms')
+
+from . import views

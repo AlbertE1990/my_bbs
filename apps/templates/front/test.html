@@ -1,0 +1,24 @@
+<div class="post-list-group">
+  <ul class="">
+    {% for post in posts %}
+      <li class="post-list">
+        <div class="author-avatar-group">
+          <img class="img-circle" width="50px" height="50px" src="{{ post.author.avatar|default( static('common/images/avatar.jpg'),boolean=True) }}" alt="">
+        </div>
+        <div class="post-info-group">
+          <a href='{{ url_for('front.post_detail',post_id=post.id) }}' class="post-title">{{ post.title }}</a>
+          <div class="post-info">
+            <span>作者：{{ post.author.username }}</span>
+            <span>所属板块：{{ post.board.name }}</span>
+            <span>发布时间：{{ post.create_time }}</span>
+            <span>评论：0</span>
+            <span>阅读：0</span>
+          </div>
+        </div>
+      </li>
+    {% endfor %}
+  </ul>
+  <div class="post-pagination text-center">
+    {{ pagination.links }}
+  </div>
+</div>

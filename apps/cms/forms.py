@@ -4,8 +4,8 @@ from wtforms.validators import Email,Length,EqualTo,DataRequired,Regexp,Validati
 import re
 from flask import g
 from utils import my_redis
-from .modles import CMSUser
 from apps.forms import BaseForm
+from ..models import User
 
 
 class LoginForm(Form):
