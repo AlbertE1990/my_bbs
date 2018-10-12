@@ -6,6 +6,7 @@ from random import choice,randint
 import json
 from exts import db
 
+
 fake = Faker(locale='zh_CN')
 
 
@@ -37,7 +38,7 @@ def front_user(count=10):
     print('Front用户添加成功，共同添加%d个用户' % n)
 
 
-def posts(count=100):
+def posts(count=50):
     count = int(count)
     for i in range(count):
         author_id = User.query.order_by(func.rand()).limit(1).first().id
@@ -96,14 +97,14 @@ def boards(count):
     print('版块生成成功！')
 
 
-def test_role_user():
-    roles = ['FrontUser','CmsUser','Operator','Administrator']
+def test_group_user():
+    roles = ['FrontUser','Operator','Administrator','Super']
     msg={}
     for r in roles:
-        role = Role(name=r)
+        role = Role(group=r)
         u = User()
         u.telephone = fake.phone_number()
-        u.username = r
+        u.username = r+'-test'
         u.email = fake.ascii_free_email()
         u.password = 'password'
         u.confirm = True
@@ -160,6 +161,7 @@ def test_permission_user():
 
 
 def set_permission():
+
     all_users = User.query.all()
     n = 0
     for u in all_users:

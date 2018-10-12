@@ -14,7 +14,7 @@ class LoginForm(Form):
     remember = BooleanField()
 
 
-class ResetPasswordForm(Form):
+class ChangePasswordForm(Form):
     raw_pwd = StringField(validators=[Length(min=6, message='请输入6位以上的密码！')])
     new_pwd1 = StringField(validators=[Length(min=6, message='请输入6位以上的密码！')])
     new_pwd2 = StringField(validators=[EqualTo('new_pwd1')])

@@ -1,91 +1,420 @@
 {% extends "cms/iframe_base.html" %}
+{% block title %}用户管理{% endblock %}
+{% block styles %}
+  {{ super() }}
+  <style>
+    .checkbox{
+      display:block;
+    }
+    #user-group{
+      float:left
+    }
+    #page-count{
+      float:right
+    }
+
+  </style>
+{% endblock %}
+{% block scripts %}
+  {{ super() }}
+  <script>
+      $(function () {
+          //初始化选择
+          function init_select(){
+              var current_url = document.URL;
+              var current_group = current_url.match(/group=(\w+)/);
+              var current_count = current_url.match(/count=(\d+)/);
+              current_group = current_group?current_group[1]:'All';
+              current_count = current_count?current_count[1]:10;
+              $('#count option[value={0}]'.format(current_count)).prop("selected", true);
+              $('#group option[value={0}]'.format(current_group)).prop("selected", true);
+
+          }
+
+          init_select();
+          //选择框选项改变事件
+          $('select').change(function () {
+              var count = $('#count').val();
+              var group = $('#group').val();
+              var base_url = "/users/?count={count}&group={group}";
+              var url = base_url.format({count:count,group:group});
+              location.href=url;
+
+          });
+
+          //给模态保存按键加上用户id
+          $('td .btn').click(function(){
+              var uid = $(this).attr('user-id');
+              console.log('btn id',uid);
+              $('.modal .submit').attr('user-id',uid);
+          });
+
+          //重置密码
+          $('#submit-password').click(function () {
+              var uid = $(this).attr('user-id');
+              console.log('submit-password id',uid);
+              var password = $('#password').val();
+              var password1 = $('#password1').val();
+              if (password != password1){
+                  alert('两次密码不一样')
+              }
+              myajax.post({
+                  'url':'/resetpassword/',
+                  'data':{
+                      'uid':uid,
+                      'password':password,
+                      'password1':password1
+                  },
+                  'success':function (data) {
+                      if(data.code == 200){
+                          xtalert.alertSuccessToast(data.message)
+                      }else{
+                          xtalert.alertErrorToast(data.message)
+                      }
+                  }
+              })
+          });
+
+          //查看用户信息
+          $('.profile').click(function () {
+              var uid = $(this).attr('user-id');
+              console.log('show profile:',uid);
+              myajax.get({
+                  'url':'/profile/'+uid,
+                  'success':function (data) {
+                      if (data.code == 200){
+                          var profile = data.data;
+                          var editable = profile.editable;
+                          $('#name').val(profile.realname).prop('disabled',!editable);
+                          $('#gender').attr('data-gender',profile.gender);
+                          $('#gender input').prop('disabled',!editable);
+                          $('#date-of-birth').val(profile.birthday).prop('disabled',!editable);
+                          $('#phone').val(profile.telephone).prop('disabled',!editable);
+                          $('#description').text(profile.intro).prop('disabled',!editable);
+                          $('#submit-profile').hide();
+                          $('#user-profile').modal('show');
+
+
+                      }
+                  },
+                  'error':function (jqXHR, textStatus, errorThrown) {
+                      alert(jqXHR.status);
+                      alert(textStatus)
+                  }
+              });
+
+          });
+
+          //保存/修改用户信息
+          $('#submit-profile').click(function () {
+              var uid = $(this).attr('user-id');
+              console.log('post profile:',uid);
+              myajax.post({
+                  'url':'/profile/'+uid,
+                  'data':JSON.stringify({
+                      'realname':$('#name').val(),
+                      'gender':  $('#gender').attr('data-gender'),
+                      'birthday':$('#date-of-birth').val(),
+                      'telephone':$('#phone').val(),
+                      'intro':$('#description').text()
+                  }),
+                  'contentType' : "application/json;charset=UTF-8",
+                  'success':function (data) {
+                      if (data.code == 200){
+                          xtalert.alertSuccessToast(data.message);
+                      }
+                  },
+                  'error':function (jqXHR, textStatus, errorThrown) {
+                      alert(jqXHR.status);
+                      alert(textStatus)
+                  }
+              });
+          });
+
+          //模态框关闭后刷新
+          $('#user-profile').on('hidden.bs.modal', function (e) {
+              location.reload()
+          });
+
+          //初始化用户权限列表
+          function init_permission_checkbox(per_items) {
+              $('.permission-body').html('');
+              var html='<div class="checkbox" ><label><input type="checkbox" name="{name}" value="{value}">{desc}</label></div>';
+              $.each(per_items,function (index,per_item) {
+                  var checkbox = html.format({name:per_item[0],value:per_item[1].value,desc:per_item[1].desc});
+                  var Ocheckbox = $(checkbox);
+                  Ocheckbox.find('input').prop('checked',per_item[1].checked).prop('disabled',per_item[1].disabled);
+                  $('.permission-body').append(Ocheckbox)
+              })
+          }
+
+          //显示权限功能
+          $('.btn-per').click(function (e) {
+              e.preventDefault();
+              var uid = $(this).attr('user-id');
+              var url = '/permission/'+uid;
+              myajax.get(
+                  {'url':url,
+                      'success':function (data) {
+                          if (data.code == 200 ){
+                              var permissions = data.data;
+                              init_permission_checkbox(permissions);
+                              $('#submit-permission').prop('user-id',uid);
+                              $('#user-permission').modal('show');
+
+                          }else{
+                              xtalert.alertErrorToast(data.message)
+                          }
+                      },
+
+                  });
+          });
+
+          //提交权限
+          $('#submit-permission').click(function (e) {
+              e.preventDefault();
+              var per_items = new Array();
+              var per_value = 0;
+              $('.permission-body .checkbox input:checked').each(function () {
+                  var value = $(this).val();
+                  console.log(value);
+                  per_value += parseInt(value);
+              });
+              console.log(per_value);
+              var uid = $(this).prop('user-id');
+              var url = '/permission/'+uid;
+              myajax.post({
+                  'url':url,
+                  'data':{
+                      per_value:per_value
+                  },
+                  'success':function (data) {
+                      if (data.code==200){
+                          xtalert.alertSuccessToast(data.message);
+                      }else{
+                          xtalert.alertErrorToast(data.message)
+                      }
+                  }
+              })
+
+          })
+
+          //开启/关闭账户
+          $('.btn-account').click(function (e) {
+              var uid = $(this).attr('user-id');
+              var disable = $(this).attr('data-type');
+              var url = '/disable_account/?uid={0}&disable={1}'.format(uid,disable);
+              myajax.get({
+                  'url':url,
+                  'success':function (data) {
+                      if(data.code == 200){
+                          location.reload()
+                      };
+                  }
+              })
+          })
+      })
+  </script>
+{% endblock %}
 {% block content %}
-<div class="content container">
-  <div class="row">
-    <div class="col-sm-8">
-      <div class="widget">
-        <div class="widget-header"> <i class="icon-table"></i>
-          <h3>CMS用户</h3>
-        </div>
-        <div class="widget-content">
-          <div class="body">
-            <table class="table table-striped table-images">
-              <thead>
-              <tr>
-                <th></th>
-                <th>头像</th>
-                <th>姓名</th>
-                <th>角色</th>
-                <th>邮箱</th>
-                <th class="hidden-xs">Date</th>
-              </tr>
-              </thead>
-              <tbody>
-              {% for user in users %}
+  <div class="content container" >
+    <div class="row">
+      <div class="col-sm-8">
+        <div class="widget">
+          <div class="widget-header"> <i class="icon-table"></i>
+            <div id="user-group" class="select">
+              <label>用户组
+                <select id="group" size="1" name="group" aria-controls="example">
+                  <option value="All">所有</option>
+                  {% for group in Group %}
+
+                    <option value={{ group.name }}>{{ group.name }}</option>
+                    {#                  {% endif %}#}
+                  {% endfor %}
+                </select>
+              </label>
+            </div>
+            <div id="page-count" class="select">
+              <label>每页显示
+                <select id="count" size="1" name="count" aria-controls="example">
+                  <option value='10' >10</option>
+                  <option value='20' >20</option>
+                  <option value='50' >50</option>
+                </select>
+                条
+              </label>
+            </div>
+          </div>
+          <div class="widget-content">
+            <div class="body">
+              <table class="table table-striped table-images">
+                <thead>
+                <tr>
+                  <th></th>
+                  <th>头像</th>
+                  <th>姓名</th>
+                  <th>用户组</th>
+                  <th>邮箱</th>
+                  <th class="hidden-xs"></th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for user in users %}
 
                   <tr class="center-block">
                     <td>{{ loop.index }}</td>
                     <td><img src="{{ user.avatar }}"></td>
-                    <td> {{ user.name }} </td>
-                    <td> {{ user.role.name }} </td>
+                    <td> {{ user.realname }} </td>
+                    <td> {{ user.role.group.name }} </td>
                     <td> {{ user.email }} </td>
                     <td class="hidden-xs">
-                      <button class="btn btn-sm btn-primary" data-target="#user-dialog"> Edit </button>
+                    {% if current_user.role.group.value|sum > user.role.group.value|sum %}
+                      <button type="button" class="btn btn-primary btn-xs"  data-toggle="modal" data-target="#reset-password"  user-id={{ user.id }}>密码重置</button>
+                    {% endif %}
+                      <button type="button" class="btn btn-primary btn-xs profile"  data-toggle="modal" data-target="" user-id={{ user.id }}>用户信息</button>
+                      {% if current_user.role.group.value|sum > user.role.group.value|sum %}
+                        {% if not user.disabled %}
+                        <button type="button" class="btn btn-danger btn-xs btn-account" data-type="disable" user-id={{ user.id }}>关闭账户</button>
+                        {% else %}
+                        <button type="button" class="btn btn-success btn-xs btn-account" data-type="undisable"  user-id={{ user.id }}>开启账户</button>
+                        {% endif %}
+                      {% endif %}
+                    {% if current_user.role.group.value|sum >= user.role.group.value|sum %}
+                      <button type="button" class="btn btn-primary btn-xs btn-per" data-toggle="modal"  user-id={{ user.id }}>权限管理</button>
+                    {% endif %}
+                    </td>
                   </tr>
-              {% endfor %}
-              </tbody>
-            </table>
+                {% endfor %}
+                </tbody>
+              </table>
+            </div>
+            <div class="text-center">
+              {{ pagination.links }}
+            </div>
           </div>
         </div>
       </div>
     </div>
-
   </div>
- <!-- Modal -->
-  <div class="modal fade" id="user-dialog" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
-      <div class="modal-dialog" role="document">
-          <div class="modal-content">
-              <div class="modal-header">
-                  <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                  <h4 class="modal-title" id="myModalLabel">轮播图</h4>
-              </div>
-              <div class="modal-body">
-                  <form action="" class="form-horizontal">
-                      <div class="form-group">
-                          <label  class="col-sm-2 control-label">名称：</label>
-                          <div class="col-sm-10">
-                              <input type="text" class="form-control" name="name" placeholder="轮播图片名称">
-                          </div>
-                      </div>
-                      <div class="form-group">
-                          <label  class="col-sm-2 control-label">图片：</label>
-                          <div class="col-sm-6">
-                              <input type="text" class="form-control" name="image_url" placeholder="轮播图片">
-                          </div>
-                          <div class="col-sm-4">
-                              <button class="btn btn-primary">选择图片</button>
-                          </div>
-                      </div>
-                      <div class="form-group">
-                          <label  class="col-sm-2 control-label">跳转：</label>
-                          <div class="col-sm-10">
-                              <input type="text" class="form-control" name="link_url" placeholder="跳转链接">
-                          </div>
-                      </div>
-                      <div class="form-group">
-                          <label  class="col-sm-2 control-label">权重：</label>
-                          <div class="col-sm-10">
-                              <input type="text" class="form-control" name="priority" placeholder="优先级">
-                          </div>
-                      </div>
-                  </form>
-              </div>
-              <div class="modal-footer">
-                  <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
-                  <button type="button" class="btn btn-primary" id="save-banner-btn">保存</button>
-              </div>
-          </div>
+  <!--模态-->
+  <div class="modal fade" id="reset-password" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+          <h4 class="modal-title" id="myModalLabel">密码重置</h4>
+        </div>
+        <div class="modal-body">
+          <form action="" >
+            <div class="form-group">
+              <label class="control-label" for="password">密码：</label>
+              <input type="password" class="form-control" id="password" name="password" placeholder="密码">
+            </div>
+            <div class="form-group">
+              <label class="control-label" for="password1">重复密码：</label>
+              <input type="password" class="form-control" id="password1" name="password1" placeholder="重复密码">
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+          <button type="button" class="btn btn-primary submit" id="submit-password">保存</button>
+        </div>
       </div>
+    </div>
   </div>
-</div>
+  <div class="modal fade" id="user-profile" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+          <h4 class="modal-title" id="myModalLabel1">用户信息</h4>
+        </div>
+        <div class="modal-body ">
+          <fieldset>
+            <legend class="section">个人信息</legend>
+            <div class="control-group">
+              <div class="col-sm-3">
+                <label class="control-label" for="name">姓名 <span class="required">*</span></label>
+              </div>
+              <div class="col-sm-9">
+                <div class="form-group">
+                  <input type="text"  name="name" required class=" mask col-sm-6" id="name" value="">
+                </div>
+              </div>
+            </div>
+            <div class="control-group">
+              <div class="col-sm-3">
+                <label class="control-label">性别</label>
+              </div>
+              <div class="col-sm-9">
+                <div class="form-group">
+                  <div data-toggle="buttons" class="btn-group" id="gender" data-gender="">
+                    <label  class="btn btn-default">
+                      <input type="radio" value=1 name="gender">
+                      男 </label>
+                    <label  class="btn btn-default">
+                      <input type="radio" value=0 name="gender">
+                      女 </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="control-group">
+              <div class="col-sm-3">
+                <label class="control-label" for="date-of-birth">生日</label>
+              </div>
+              <div class="col-sm-9">
+                <div class="form-group">
+                  <input type="text"  name="date-of-birth"  class=" col-sm-6" id="date-of-birth" value="">
+                </div>
+              </div>
+            </div>
+            <div class="control-group">
+              <div class="col-sm-3">
+                <label class="control-label" for="phone">电话号码 <span class="required">*</span></label>
+              </div>
+              <div class="col-sm-9">
+                <div class="form-group">
+                  <input type="text"  name="phone" required class=" mask parsley-validated col-sm-6" id="phone" data-inputmask="'mask':'+33 999 999 999'" value="" >
+                </div>
+              </div>
+            </div>
+            <div class="control-group">
+              <div class="col-sm-3">
+                <label class="control-label" for="description">简介</label>
+              </div>
+              <div class="col-sm-9">
+                <div class="form-group">
+                  <textarea class="form-control" name="text" rows="3" id="description" ></textarea>
+                </div>
+              </div>
+            </div>
+          </fieldset>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+          <button type="button" class="btn btn-primary submit" id="submit-profile">保存</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal fade" id="user-permission" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+          <h4 class="modal-title" id="myModalLabel">权限</h4>
+        </div>
+        <div class="modal-body permission-body">
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+          <button type="button" class="btn btn-primary submit" id="submit-permission">保存</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
 {% endblock %}
+

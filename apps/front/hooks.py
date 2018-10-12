@@ -1,7 +1,7 @@
 from flask import request,render_template,redirect,url_for
 from . import bp
 from flask_login import current_user
-from ..models import Permission
+from ..models import Permission,PermissionDesc,Group
 
 
 @bp.before_request
@@ -17,10 +17,8 @@ def before_request():
             return redirect(url_for('front.unconfirm'))
 
 
-@bp.app_errorhandler(404)
-def page_not_found(error):
-    return render_template('front/front_404.html'),404
+
 
 @bp.app_context_processor
 def inject_permissions():
-    return dict(Permission=Permission)
+    return dict(Permission=Permission,PermissionDesc=PermissionDesc,Group=Group)

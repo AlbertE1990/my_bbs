@@ -22,7 +22,7 @@
         <tbody>
             {% for post in posts %}
                 <tr data-id="{{ post.id }}"   >
-                    <td>{{ post.title }}</td>
+                    <td><a href={{ url_for('.post_detail',post_id=post.id) }}>{{ post.title }}</a></td>
                     <td>{{ post.create_time }}</td>
                     <td>{{ post.board.name }}</td>
                     <td>{{ post.author.username }}</td>

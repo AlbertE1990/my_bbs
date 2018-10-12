@@ -6,28 +6,41 @@
   .checkbox{
   display:block;
   }
+  #example_length{
+    float:left;
+  }
+  #example_filter{
+    float:right;
+  }
   </style>
 {% endblock %}
 {% block scripts %}
   {{ super() }}
   <script>
   $(function () {
-
+      //初始化用户权限列表
+      function init_permission_checkbox(per_items) {
+          $('.permission-body').html('');
+          var html='<div class="checkbox" ><label><input type="checkbox" name="{name}" value="{value}">{desc}</label></div>';
+        $.each(per_items,function (index,per_item) {
+            var checkbox = html.format({name:per_item[0],value:per_item[1].value,desc:per_item[1].desc});
+            var Ocheckbox = $(checkbox);
+            Ocheckbox.find('input').prop('checked',per_item[1].checked).prop('disabled',per_item[1].disabled);
+            $('.permission-body').append(Ocheckbox)
+        })
+      };
+      //显示权限功能
       $('.btn-per').click(function (e) {
           e.preventDefault();
-          var uid = $(this).attr('data-user');
+          var uid = $(this).attr('user-id');
           var url = '/permission/'+uid;
-          var per;
           myajax.get(
               {'url':url,
               'success':function (data) {
                   if (data.code == 200 ){
-                      per = data.data;
-                      $('.checkbox input').prop('checked',false);
-                      $.each(per, function (k, v) {
-                          console.log(k,v);
-                          $('.checkbox input[name={0}]'.format(k)).prop('checked',v);
-                      });
+                      var permissions = data.data;
+                      init_permission_checkbox(permissions);
+                      $('#submit').prop('user-id',uid);
                       $('#myModal').modal('show');
 
                   }else{
@@ -37,9 +50,36 @@
 
           });
       });
-      function show_permission(per) {
-          var per =0
-      }
+
+      //提交权限
+      $('#submit').click(function (e) {
+          e.preventDefault();
+          var per_items = new Array();
+          var per_value = 0;
+          $('.checkbox input:checked').each(function () {
+              var value = $(this).prop('value');
+              per_value += parseInt(value);
+          });
+          console.log(per_value);
+          var uid = $(this).prop('user-id');
+          var url = '/permission/'+uid;
+          myajax.post({
+              'url':url,
+              'data':{
+                  per_value:per_value
+              },
+              'success':function (data) {
+                  if (data.code==200){
+                      xtalert.alertSuccessToast(data.message)
+                      location.reload()
+                  }else{
+                      xtalert.alertErrorToast(data.message)
+                  }
+              }
+          })
+
+      })
+
   })
   </script>
 {% endblock %}
@@ -49,7 +89,15 @@
       <div class="col-sm-8">
         <div class="widget">
           <div class="widget-header"> <i class="icon-table"></i>
-            <h3>CMS用户</h3>
+            <div id="example_length" class="dataTables_length">
+              <label>用户组<select size="1" name="example_length" aria-controls="example">
+                {% for group in Group %}
+                  <option value={{ group.name }} >{{ group.name }}</option>
+                {% endfor %}
+              </select>
+              </label>
+            </div>
+
           </div>
           <div class="widget-content">
             <div class="body">
@@ -59,9 +107,9 @@
                   <th></th>
                   <th>头像</th>
                   <th>姓名</th>
-                  <th>角色</th>
+                  <th>用户组</th>
                   <th>邮箱</th>
-                  <th class="hidden-xs">Date</th>
+                  <th class="hidden-xs"></th>
                 </tr>
                 </thead>
                 <tbody>
@@ -71,10 +119,10 @@
                     <td>{{ loop.index }}</td>
                     <td><img src="{{ user.avatar }}"></td>
                     <td> {{ user.realname }} </td>
-                    <td> {{ user.role.name }} </td>
+                    <td> {{ user.role.group.name }} </td>
                     <td> {{ user.email }} </td>
                     <td class="hidden-xs">
-                    <button type="button" class="btn btn-primary btn-sm btn-per" data-toggle="modal" data-target="#myModal" data-user={{ user.id }}>权限管理</button>
+                    <button type="button" class="btn btn-primary btn-sm btn-per" data-toggle="modal"  user-id={{ user.id }}>权限管理</button>
                   </tr>
                 {% endfor %}
                 </tbody>
@@ -93,88 +141,11 @@
           <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
           <h4 class="modal-title" id="myModalLabel">权限</h4>
         </div>
-        <div class="modal-body">
-          <div class="checkbox">
-            <label>
-              <input type="checkbox" name="LOGIN" value="1">LOGIN
-            </label>
-          </div>
-          <div class="checkbox">
-            <label>
-              <input type="checkbox" name="VIEW_POST" value="2">
-              VIEW_POST
-            </label>
-          </div>
-          <div class="checkbox">
-            <label>
-              <input type="checkbox" name="PUBLISH_POST" value="4">
-              PUBLISH_POST
-            </label>
-          </div>
-          <div class="checkbox">
-            <label>
-              <input type="checkbox" name="PUBLISH_COMMENT" value="8">
-              PUBLISH_COMMENT
-            </label>
-          </div>
-          <div class="checkbox">
-            <label>
-              <input type="checkbox" name="LOGIN_CMS" value="16">
-              LOGIN_CMS
-            </label>
-          </div>
-          <div class="checkbox">
-            <label>
-              <input type="checkbox" name="MANAGE_POST" value="32">
-              MANAGE_POST
-            </label>
-          </div>
-          <div class="checkbox">
-            <label>
-              <input type="checkbox" name="MANAGE_COMMENTE" value="64" checked>
-              MANAGE_COMMENTE
-            </label>
-          </div>
-          <div class="checkbox disabled">
-            <label>
-              <input type="checkbox" name="BOARDER" value="128" disabled>
-              BOARDER
-            </label>
-          </div>
-          <div class="checkbox">
-            <label>
-              <input type="checkbox" name="BANNER" value="256">
-              BANNER
-            </label>
-          </div>
-          <div class="checkbox">
-            <label>
-              <input type="checkbox" name="FRONTUSER" value="512">
-              FRONTUSER
-            </label>
-          </div>
-          <div class="checkbox">
-            <label>
-              <input type="checkbox" name="CMSUSER" value="1204">
-              CMSUSER
-            </label>
-          </div>
-          <div class="checkbox">
-            <label>
-              <input type="checkbox" name="ADMINER" value="2048">
-              ADMINER
-            </label>
-          </div>
-          <div class="checkbox">
-            <label>
-              <input type="checkbox" name="ALL_PERMISSION" value="4095">
-              ALL_PERMISSION
-            </label>
-          </div>
+        <div class="modal-body permission-body">
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
-          <button type="button" class="btn btn-primary">保存</button>
+          <button type="button" class="btn btn-primary" id="submit">保存</button>
         </div>
       </div>
     </div>

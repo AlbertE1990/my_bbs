@@ -1,6 +1,6 @@
 from sqlalchemy.orm import backref
 from exts import db,login_manager
-from flask import current_app,url_for
+from flask import current_app,url_for,jsonify
 import shortuuid
 import enum
 from datetime import datetime
@@ -8,39 +8,96 @@ from werkzeug.security import generate_password_hash,check_password_hash
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 from flask_login import UserMixin,AnonymousUserMixin
 
-
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(user_id)
 
 
 class Permission():
-    #所有权限
-    ALL_PERMISSION   = 0b111111111111
+
     #1.前端登录
-    LOGIN            = 0b000000000001
+    LOGIN                       = 0b1
     #2.查看帖子
-    VIEW_POST        = 0b000000000010
+    VIEW_POST                   = 0b10
     #3.发表帖子
-    PUBLISH_POST     = 0b000000000100
+    PUBLISH_POST                = 0b100
     #4.发表评论
-    PUBLISH_COMMENT  = 0b000000001000
+    PUBLISH_COMMENT             = 0b1000
     #5.后台登录
-    LOGIN_CMS        = 0b000000010000
+    LOGIN_CMS                   = 0b10000
     # 6.管理帖子
-    MANAGE_POST      = 0b000000100000
+    MANAGE_POST                 = 0b100000
     # 7.管理评论
-    MANAGE_COMMENTE  = 0b000001000000
-    # 8.管理板块
-    BOARDER          = 0b000010000000
-    #9.管理轮播图
-    BANNER           = 0b000100000000
-    #10.管理前台用户的权限
-    FRONTUSER        = 0b001000000000
-    #11.管理后台用户的权限
-    CMSUSER          = 0b010000000000
-    #12.超级管理员
-    ADMINER          = 0b100000000000
+    MANAGE_COMMENTE             = 0b1000000
+    # 8.管理前台用户账号
+    MANAGE_FRONTUSER_ACCOUNT    = 0b10000000
+    # 9.管理前台用户权限
+    MANAGE_FRONTUSER_PERMISSION = 0b100000000
+    # 10.管理板块
+    BOARDER                     = 0b1000000000
+    #11.管理轮播图
+    BANNER                      = 0b10000000000
+    #12.管理后台用户账户
+    MANAGE_OPERATOR_ACCOUNT     = 0b100000000000
+    #13.管理后台用户权限
+    MANAGE_OPERATOR_PERMISSION  = 0b1000000000000
+    #14.管理管理员账户
+    MANAGE_ADMINSTRATOR_ACCOUNT = 0b10000000000000
+    #15.管理管理员权限
+    MANAGE_ADMINSTRATOR_PERMISSION = 0b100000000000000
+    #16.超级管理员
+    SU                          = 0b1000000000000000
+    # 所有权限
+    ALL_PERMISSION              = 0b1111111111111111
+
+
+class PermissionDesc():
+
+    #1.前端登录
+    LOGIN                       = '登陆前端'
+    #2.查看帖子
+    VIEW_POST                   = '查看帖子'
+    #3.发表帖子
+    PUBLISH_POST                = '发表帖子'
+    #4.发表评论
+    PUBLISH_COMMENT             = '发表评论'
+    #5.后台登录
+    LOGIN_CMS                   = '登陆CMS管理系统'
+    # 6.管理帖子
+    MANAGE_POST                 = '管理帖子'
+    # 7.管理评论
+    MANAGE_COMMENTE             = '管理评论'
+    # 8.管理前台用户账号
+    MANAGE_FRONTUSER_ACCOUNT    = '管理前台用户账号'
+    # 9.管理前台用户权限
+    MANAGE_FRONTUSER_PERMISSION = '管理前台用户权限'
+    # 10.管理板块
+    BOARDER                     = '管理板块'
+    #11.管理轮播图
+    BANNER                      = '管理轮播图'
+    #12.管理后台用户账户
+    MANAGE_OPERATOR_ACCOUNT     = '管理CMS用户账户'
+    #13.管理后台用户权限
+    MANAGE_OPERATOR_PERMISSION  = '管理CMS用户权限'
+    #14.管理管理员账户
+    MANAGE_ADMINSTRATOR_ACCOUNT = '管理管理员账户'
+    #15.管理管理员权限
+    MANAGE_ADMINSTRATOR_PERMISSION = '管理管理员权限'
+    #16.超级管理员
+    SU                          = '超级管理员'
+    # 所有权限
+    ALL_PERMISSION              = '所有权限'
+
+
+
+class Group(enum.Enum):
+    FrontUser     = [Permission.LOGIN, Permission.VIEW_POST, Permission.PUBLISH_POST,
+                     Permission.PUBLISH_COMMENT]
+    Operator      = FrontUser + [Permission.LOGIN_CMS,Permission.MANAGE_POST,Permission.MANAGE_COMMENTE,
+                                      Permission.MANAGE_FRONTUSER_ACCOUNT,Permission.MANAGE_FRONTUSER_PERMISSION]
+    Administrator = Operator + [Permission.BANNER,Permission.BOARDER,Permission.MANAGE_OPERATOR_ACCOUNT,
+                                     Permission.MANAGE_ADMINSTRATOR_PERMISSION]
+    Super = Administrator+[Permission.MANAGE_ADMINSTRATOR_ACCOUNT,Permission.MANAGE_ADMINSTRATOR_PERMISSION,Permission.SU]
 
 
 class GenderEnum(enum.Enum):
@@ -48,8 +105,6 @@ class GenderEnum(enum.Enum):
     FMALE = 2
     SECRET = 3
     UNKNOW = 4
-
-f = GenderEnum.FMALE
 
 
 BookMark = db.Table(
@@ -84,13 +139,14 @@ class User(db.Model, UserMixin):
     email = db.Column(db.String(50),unique=True)
     confirm = db.Column(db.Boolean,default=False)
     realname = db.Column(db.String(100))
-    avatar = db.Column(db.String(100))
+    avatar = db.Column(db.String(255))
     signature = db.Column(db.String(100))
     gender  = db.Column(db.Enum(GenderEnum),default=GenderEnum.UNKNOW)
     join_time = db.Column(db.DATETIME,default=datetime.now)
     last_seen = db.Column(db.DATETIME,default=datetime.now)
     birthday = db.Column(db.DATE)
     intro = db.Column(db.Text)
+    disabled = db.Column(db.Boolean,default=False)
 
     bookmark = db.relationship('PostModel', secondary=BookMark, backref=db.backref('mark_users'))
 
@@ -192,40 +248,58 @@ class User(db.Model, UserMixin):
         return self.role is not None and self.role.has_permission(perm)
 
     def is_administrator(self):
-        return self.can(Permission.ADMINER)
+        return self.can(Permission.SU)
+
+    def set_permission(self,permission):
+        if not self.role:
+            self.role = Role()
+        self.role.permissions = permission
+        db.session.add(self)
 
     def ping(self):
         self.last_seen = datetime.now()
         db.session.add(self)
 
+    def to_json(self):
+        json_user = {
+            'url': url_for('cms.profile',uid=self.id),
+            'id':self.id,
+            'telephone':self.telephone,
+            'username': self.username,
+            'email': self.email,
+            'realname':self.realname,
+            'avatar':self.avatar,
+            'gender': self.gender.value,
+            'join_time': self.join_time,
+            'last_seen': self.last_seen,
+            'birthday': self.birthday,
+            'intro': self.intro,
+        }
+        return json_user
+
+    def update_profile(self,**data):
+        for k in data:
+            setattr(self, k, data[k])
+        db.session.add(self)
+        db.session.commit()
 
 class Role(db.Model):
     __tablename__ = 'role'
     id = db.Column(db.Integer,primary_key=True,autoincrement=True)
     u_id = db.Column(db.String(100), db.ForeignKey('user.id'))
-    name = db.Column(db.Enum('FrontUser', 'CmsUser','Operator','Administrator'),nullable=False)
+    group = db.Column(db.Enum(Group),default=Group.FrontUser,nullable=False)
     permissions = db.Column(db.Integer,nullable=False)
-    user = db.relationship('User', backref=db.backref('role',uselist=False))
-
-    roles = {
-        'FrontUser': [Permission.LOGIN, Permission.VIEW_POST, Permission.PUBLISH_POST,
-                      Permission.PUBLISH_COMMENT],
-        'CmsUser': [Permission.LOGIN, Permission.VIEW_POST, Permission.PUBLISH_POST,
-                    Permission.PUBLISH_COMMENT, Permission.LOGIN_CMS],
-        'Operator': [Permission.LOGIN, Permission.VIEW_POST, Permission.PUBLISH_POST,
-                     Permission.PUBLISH_COMMENT, Permission.LOGIN_CMS, Permission.MANAGE_POST,
-                     Permission.MANAGE_COMMENTE, Permission.BOARDER, Permission.BANNER,
-                     Permission.FRONTUSER],
-        'Administrator': [Permission.ALL_PERMISSION]
-    }
-    default_role = 'FrontUser'
+    user = db.relationship('User', backref=db.backref('role', uselist=False))
+    default_group = 'FrontUser'
 
     def __init__(self, **kwargs):
         super(Role, self).__init__(**kwargs)
-        if self.name is None:
-            self.name = self.default_role
+        if self.group is None:
+            self.group = self.default_group
         if self.permissions is None:
-            self.permissions = sum(self.roles[self.name])
+            self.permissions = sum(getattr(Group,self.group,0).value)
+        else:
+            self.permissions = min(sum(getattr(Group,self.group).value),self.permissions)
 
     def add_permission(self, *perms):
         for perm in perms:
@@ -238,13 +312,13 @@ class Role(db.Model):
                 self.permissions -= perm
 
     def reset_permissions(self):
-        self.permissions = sum(self.roles[self.default_role])
+        self.permissions = sum(getattr(Group,self.group).value)
 
     def has_permission(self, perm):
         return self.permissions & perm == perm
 
     def __repr__(self):
-        return '<Role %r>' % self.name
+        return '<Role:%r>' % self.group
 
 
 #轮播图
@@ -257,14 +331,12 @@ class BannerModel(db.Model):
     priority = db.Column(db.Integer,default=0)
     create_time = db.Column(db.DateTime,default=datetime.now)
 
-
 #板块
 class BoardModel(db.Model):
     __tablename__ = 'board'
     id = db.Column(db.Integer,primary_key=True,autoincrement=True)
     name = db.Column(db.String(255),nullable=False)
     create_time = db.Column(db.DateTime,default=datetime.now)
-
 
 #帖子
 class PostModel(db.Model):
@@ -280,7 +352,6 @@ class PostModel(db.Model):
     board = db.relationship('BoardModel',backref='posts')
 
     __mapper_args__ = {'order_by': create_time.desc()}
-
 
 #评论
 class CommentModel(db.Model):
@@ -306,3 +377,13 @@ class HighlightPostModel(db.Model):
     create_time = db.Column(db.DateTime, default=datetime.now)
 
     post = db.relationship('PostModel',backref=backref('highlight',uselist=False) )
+
+
+#顶置贴
+class TopPostModel(db.Model):
+    __tablename__ = 'top_post'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    post_id = db.Column(db.Integer, db.ForeignKey('post.id'))
+    create_time = db.Column(db.DateTime, default=datetime.now)
+
+    post = db.relationship('PostModel',backref=backref('top',uselist=False) )

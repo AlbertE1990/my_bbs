@@ -2,7 +2,7 @@ import click
 from apps import create_app
 from flask_migrate import Migrate,MigrateCommand
 from exts import db
-from apps.models import PostModel,CommentModel,User,Role,Permission
+from apps.models import PostModel,CommentModel,User,Role,Permission,Group
 import fake_
 
 app = create_app()
@@ -17,7 +17,8 @@ def make_shell_context():
                    CommentModel=CommentModel,
                    User = User,
                    Role = Role,
-                   Permission = Permission
+                   Permission = Permission,
+                   Group = Group
     )
     return context
 
@@ -46,8 +47,8 @@ def frontuser():
 
 
 @app.cli.command()
-def test_role_user():
-    fake_.test_role_user()
+def test_group_user():
+    fake_.test_group_user()
 
 
 @app.cli.command()

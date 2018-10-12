@@ -1,8 +1,9 @@
 from functools import wraps
-from flask import session,redirect,url_for,request,render_template,abort
+from flask import redirect,url_for,request,abort
 from flask_login import current_user,login_required
 from flask_login.utils import login_url
 from utils import restful
+from .models import User
 
 def login_required(func):
     @wraps(func)
@@ -17,6 +18,7 @@ def login_required(func):
             redirect_url = login_url(url_for(login_view),next_url=request.url)
             return redirect(redirect_url)
     return wrapper
+
 
 def permission_required(permission):
     def decorator(f):
