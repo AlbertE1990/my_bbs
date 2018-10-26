@@ -22,9 +22,9 @@
         <div class="post-container box">
           <div class="post-head-group">
             <h3 class="title">{{ post.title }}
-          {% if post.highlight %}
-            <span class="label label-danger">精华帖</span>
-          {% endif %}
+              {% if post.highlight %}
+                <span class="label label-danger">精华帖</span>
+              {% endif %}
             </h3>
             <div class="post-info">
               <span>作者：{{ post.author.username }}</span>
@@ -34,31 +34,46 @@
               <span>阅读：{{ post |read_count }}</span>
               <a href="javascript:void(0)">
                 {% if not current_user.is_authenticated or post not in current_user.bookmark %}
-                <span class="glyphicon glyphicon-star-empty " data-book="book" title="收藏该帖"></span>
+                  <span class="glyphicon glyphicon-star-empty " data-book="book" title="收藏该帖"></span>
                 {% else %}
-                <span class="glyphicon glyphicon-star" data-book="unbook" title="取消收藏"></span>
+                  <span class="glyphicon glyphicon-star" data-book="unbook" title="取消收藏"></span>
                 {% endif %}
               </a>
             </div>
-            <div class="post-info" id="post-manage">
-            {% if current_user.is_authenticated %}
-
-              {% if current_user.can(Permission.MANAGE_POST) %}
-                <span><a class="btn btn-warning btn-sm" href={{ url_for('.upost',post_id=post.id) }}>编辑</a></span>
-                {% if not post.highlight %}
-                <span><a class="btn btn-warning btn-sm" href={{ url_for('.hpost',pid=post.id) }}>加精</a></span>
+            <div class="post-info" id="post-manage" post-id={{ post.id }}>
+              {% if current_user.is_authenticated %}
+                {% if current_user.can(Permission.MANAGE_POST) %}
+                  <span><a class="btn btn-warning btn-sm" href={{ url_for('.upost',post_id=post.id) }}>编辑</a></span>
+                  {% if not post.highlight %}
+                    <span><a class="btn btn-warning btn-sm" href={{ url_for('.hpost',pid=post.id) }}>加精</a></span>
+                  {% else %}
+                    <span><a class="btn btn-danger btn-sm" href={{ url_for('.unhpost',pid=post.id) }}>取消加精</a></span>
+                  {% endif %}
+                  {% if not post.top %}
+                    <span><a class="btn btn-warning btn-sm top-post" href="javascript:void(0)" data-type="top" data-url={{ url_for('cms.tpost') }}>顶置</a></span>
+                  {% else %}
+                    <span><a class="btn btn-warning btn-sm top-post" href="javascript:void(0)" data-type="untop" data-url={{ url_for('cms.tpost')}}>取消顶置</a></span>
+                  {% endif %}
                 {% else %}
-                <span><a class="btn btn-danger btn-sm" href={{ url_for('.unhpost',pid=post.id) }}>取消加精</a></span>
+                  {% if post.author == current_user %}
+                    <span><a class="btn btn-warning btn-sm" href={{ url_for('.upost',post_id=post.id) }}>编辑</a></span>
+                    {% if not post.highlight %}
+                      {% if not post.apply_highlight %}
+                        <span><a class="btn btn-warning btn-sm apply" href="javascript:void(0)" data-type="highlight">申请加精</a></span>
+                      {% else %}
+                        <span><a class="btn btn-warning btn-sm apply disabled" href="javascript:void(0)" data-type="highlight">申请加精</a></span>
+                      {% endif %}
+                    {% endif %}
+                    {% if not post.top %}
+                      {% if not post.apply_top %}
+                        <span><a class="btn btn-warning btn-sm apply" href="javascript:void(0)" data-type="top">申请顶置</a></span>
+                      {% else %}
+                        <span><a class="btn btn-warning btn-sm apply disabled" href="javascript:void(0)" data-type="top">申请顶置</a></span>
+                      {% endif %}
+                    {% endif %}
+                  {% endif %}
                 {% endif %}
-                <span><a class="btn btn-warning btn-sm" href="javascript:void(0)">顶置</a></span>
-              {% elif post.author == current_user %}
-                <span><a class="btn btn-warning btn-sm" href={{ url_for('.upost',post_id=post.id) }}>编辑</a></span>
-                {% if not post.highlight %}
-                <span><a class="btn btn-warning btn-sm" href="javascript:void(0)">申请加精</a></span>
-                {% endif %}
-                <span><a class="btn btn-warning btn-sm" href="javascript:void(0)">申请顶置</a></span>
               {% endif %}
-            {% endif %}
             </div>
           </div>
           <hr/>
@@ -72,9 +87,9 @@
               <div class="col-sm-1">
                 <a  class=""  href="#" target="_blank" >
                   {% if current_user.is_authenticated %}
-                  <img class="img-circle" height="50px" src="{{ current_user.get_avatar()}}">
+                    <img class="img-circle" height="50px" src="{{ current_user.get_avatar()}}">
                   {% else %}
-                  <img class="img-circle" height="50px" src="http://s1.bbs.xiaomi.cn/statics/images/noavatar_small.gif">
+                    <img class="img-circle" height="50px" src="http://s1.bbs.xiaomi.cn/statics/images/noavatar_small.gif">
                   {% endif %}
                 </a>
               </div>
@@ -88,9 +103,9 @@
               <div class="col-sm-2 submit-btn">
                 {% if current_user.is_authenticated %}
                   {% if current_user.can(Permission.PUBLISH_COMMENT) %}
-                  <button class="btn btn-warning" id="reply-btn">立即发表</button>
+                    <button class="btn btn-warning" id="reply-btn">立即发表</button>
                   {% else %}
-                  <button class="btn btn-warning disabled" >禁言中</button>
+                    <button class="btn btn-warning disabled" >禁言中</button>
                   {% endif %}
                 {% else %}
                   <button class="btn btn-warning disabled" id="reply-btn">立即发表</button>
@@ -113,13 +128,13 @@
                     <div class="comment-info">
                       <span class="comment-author">{{ comment.author.username }}</span>
                       <span>发表于：{{ comment.create_time }}</span>
-                    {% if current_user.can(Permission.MANAGE_COMMENTE) %}
-                      {% if not comment.disabled %}
-                        <span><a class="btn btn-danger btn-xs" href="{{ url_for("front.delete_comment",cid=comment.id) }}">删除</a></span>
-                      {% else %}
-                        <span><a class="btn btn-warning btn-xs" href="{{ url_for("front.undelete_comment",cid=comment.id) }}">恢复</a></span>
+                      {% if current_user.can(Permission.MANAGE_COMMENTE) %}
+                        {% if not comment.disabled %}
+                          <span><a class="btn btn-danger btn-xs" href="{{ url_for("front.delete_comment",cid=comment.id) }}">删除</a></span>
+                        {% else %}
+                          <span><a class="btn btn-warning btn-xs" href="{{ url_for("front.undelete_comment",cid=comment.id) }}">恢复</a></span>
+                        {% endif %}
                       {% endif %}
-                    {% endif %}
                     </div>
                     <div class="comment-cotent">
                       {% if not comment.disabled %}

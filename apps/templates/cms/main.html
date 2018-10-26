@@ -67,6 +67,9 @@
               {% if current_user.can(Permission.MANAGE_POST) %}
                 <li data-src={{ url_for('cms.posts') }}><a href="javascript:void(0)"> <i class="icon-angle-right"></i> 帖子管理</a></li>
               {% endif  %}
+              {% if current_user.can(Permission.MANAGE_POST) %}
+                <li data-src={{ url_for('cms.posts') }}><a href="javascript:void(0)"> <i class="icon-angle-right"></i> 查看申请</a></li>
+              {% endif  %}
               {% if current_user.can(Permission.MANAGE_COMMENTE) %}
                 <li data-src={{ url_for('cms.comments') }}><a href="javascript:void(0)"> <i class="icon-angle-right"></i> 评论管理 </a></li>
               {% endif %}
@@ -79,13 +82,13 @@
 
           <li><a href="javascript:void(0)"> <i class="icon-flag"></i> 用户管理 <i class="arrow icon-angle-left"></i></a>
             <ul class="sub-menu">
-              <li data-src={{ url_for('.users')}} ><a href="javascript:void(0)"> <i class="icon-angle-right"></i> 账户管理 </a></li>
-              <li data-src={{ url_for('.manage_permission')}} ><a href="javascript:void(0)"> <i class="icon-angle-right"></i> 权限管理 </a></li>
+              <li data-src={{ url_for('.users')}} ><a href="javascript:void(0)"> <i class="icon-angle-right"></i> 用户管理 </a></li>
+              <li data-src={{ url_for('.users')}} ><a href="javascript:void(0)"> <i class="icon-angle-right"></i> 添加账户 </a></li>
             </ul>
           </li>
           <li><a href="javascript:void(0)"> <i class="icon-picture"></i> 组管理 <i class="arrow icon-angle-left"></i></a>
             <ul class="sub-menu">
-              {% if current_user.can(Permission.SU) %}
+              {% if current_user.can(Permission.MANAGE_GROUP) %}
                 <li data-src={{ url_for('cms.manage_permission')}}><a href="javascript:void(0)"> <i class="icon-angle-right"></i> 管理用户组 </a></li>
               {% endif %}
             </ul>

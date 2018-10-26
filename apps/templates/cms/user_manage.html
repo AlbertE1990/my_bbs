@@ -180,7 +180,6 @@
                   console.log(value);
                   per_value += parseInt(value);
               });
-              console.log(per_value);
               var uid = $(this).prop('user-id');
               var url = '/permission/'+uid;
               myajax.post({
@@ -197,7 +196,7 @@
                   }
               })
 
-          })
+          });
 
           //开启/关闭账户
           $('.btn-account').click(function (e) {

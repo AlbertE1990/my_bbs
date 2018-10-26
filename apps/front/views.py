@@ -6,8 +6,8 @@ from .forms import SignupForm,LoginForm,AddPostForm,AddCommentForm,PasswordReset
 from ..models import User,Permission
 from exts import db,mail
 from flask_login import current_user,login_user
-from config import FRONT_USER_ID,PER_PAGE
-from ..models import BannerModel,BoardModel,PostModel,CommentModel,HighlightPostModel
+from config import PER_PAGE
+from ..models import BannerModel,BoardModel,PostModel,CommentModel,HighlightPostModel,TopPostModel,ApplyTop,ApplyHighlight
 from io import BytesIO
 from flask_paginate import Pagination,get_page_parameter
 from apps.email import send_email
@@ -125,7 +125,6 @@ def signup2():
         user = User(telephone=telephone,username=username,password=password,email=email)
         db.session.add(user)
         db.session.commit()
-        session[FRONT_USER_ID] = user.id
         send_confirm(user,email)
         login_email = 'http://mail.'+email.split('@')[-1]
         return render_template('front/reigster_success.html', login_email=login_email)
@@ -510,4 +509,59 @@ def unhpost(pid):
     db.session.delete(highlight)
     db.session.commit()
     return redirect(request.referrer)
+
+
+#申请加精
+@bp.route('/apply-highlight/',methods=['POST'])
+@login_required
+def apply_highlight():
+    pid = request.form.get('pid')
+
+
+class ApplyView(views.MethodView):
+
+    def post(self):
+        pid = request.form.get('pid')
+        type = request.form.get('type')
+        check_res = self.check(pid,type)
+        if not check_res['flag']:
+            return restful.params_error(message=check_res['message'])
+        func = getattr(self,type)
+        try:
+            func(pid)
+        except Exception as e:
+            return restful.params_error(str(e))
+        try:
+            db.session.commit()
+            print('申请成功')
+            return restful.success('申请成功')
+        except Exception as e:
+            print(e)
+            db.session.rollback()
+            return restful.params_error('申请失败')
+
+    def check(self,pid,type):
+        if pid is None or type is None:
+            return dict(flag=0,message='参数不能为空')
+        if not getattr(self,type):
+            return dict(flag=0, message='不支持此方法')
+        return dict(flag=1)
+
+    def highlight(self,pid):
+        apply_highlight_post = ApplyHighlight.query.filter_by(post_id=pid).first()
+        if apply_highlight_post:
+            raise Exception('请勿重复申请!')
+        apply_highlight_post = ApplyHighlight(post_id=pid)
+        db.session.add(apply_highlight_post)
+
+    def top(self,pid):
+        apply_top_post = ApplyTop.query.filter_by(post_id=pid).first()
+        if apply_top_post:
+            raise Exception('请勿重复申请!')
+        apply_top_post = ApplyTop(post_id=pid)
+        db.session.add(apply_top_post)
+
+bp.add_url_rule('/apply/',view_func=ApplyView.as_view('apply'))
+
+
 

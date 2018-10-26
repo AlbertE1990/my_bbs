@@ -11,7 +11,7 @@ from flask_login import login_user,logout_user,current_user
 import os
 from apps.models import BoardModel,PostModel,HighlightPostModel,BannerModel
 from flask_paginate import get_page_parameter,Pagination
-from ..models import User,Permission,Role,Group,TopPostModel,PermissionDesc
+from ..models import User,Permission,Role,Group,TopPostModel,PermissionDesc,ApplyTop,ApplyHighlight
 from .import bp
 from ..decorators import login_required,permission_required
 
@@ -168,12 +168,12 @@ def email_captcha():
 
 
 #cms用户管理
-@bp.route('/cms_users/')
-@login_required
-@permission_required(Permission.MANAGE_OPERATOR_ACCOUNT)
-def cms_users():
-    users = User.query.outerjoin(Role).filter(Role.group!='FrontUser').order_by(User.join_time.desc()).all()
-    return render_template('cms/user_manage.html',users=users)
+# @bp.route('/cms_users/')
+# @login_required
+# @permission_required(Permission.MANAGE_OPERATOR_ACCOUNT)
+# def cms_users():
+#     users = User.query.outerjoin(Role).filter(Role.group!='FrontUser').order_by(User.join_time.desc()).all()
+#     return render_template('cms/user_manage.html',users=users)
 
 
 #注册cms用户
@@ -185,7 +185,7 @@ def create_user(username,password,email):
 
 @bp.route('/register/',methods=['post'])
 @login_required
-@permission_required(Permission.MANAGE_OPERATOR_ACCOUNT)
+@permission_required(Permission.CREATE_ACCOUNT)
 def register():
     form = RegisterForm(request.form)
     if form.validate():
@@ -205,16 +205,24 @@ def register():
 @permission_required(Permission.MANAGE_POST)
 def posts():
     page = request.args.get(get_page_parameter(), type=int, default=1)
-    PER_PAGE  = current_app.config['PER_PAGE']
-    start = (page-1)*PER_PAGE
-    end = start+PER_PAGE
-    query_obj = PostModel.query.order_by(PostModel.create_time.desc())
+    per_page  = request.args.get('per_page', type=int, default=current_app.config['PER_PAGE'])
+    print('per_page',per_page)
+    board_id = request.args.get('board_id', type=int,default=0)
+    print('board_id',board_id)
+    start = (page-1)*per_page
+    end = start+per_page
+    if board_id == 0:
+        query_obj = PostModel.query.order_by(PostModel.create_time.desc())
+    else:
+        query_obj = PostModel.query.filter_by(board_id=board_id).order_by(PostModel.create_time.desc())
     posts = query_obj.slice(start,end)
     total = query_obj.count()
-    pagination = Pagination(page=page,total=total,bs_version=3)
+    boards = BoardModel.query.all()
+    pagination = Pagination(page=page,per_page=per_page,total=total,bs_version=3)
     context = {
         'posts': posts,
-        'pagination': pagination
+        'pagination': pagination,
+        'boards':boards
     }
 
     return render_template('cms/posts.html',**context)
@@ -236,41 +244,61 @@ def dposts():
     return restful.success('删帖成功！')
 
 
-#帖子加精
+#帖子加精处理
 @bp.route('/hpost/',methods=['POST'])
 @login_required
 @permission_required(Permission.MANAGE_POST)
 def hpost():
     post_id = request.form.get('post_id')
+    type = request.form.get('type')
     if not post_id:
         return restful.params_error('此帖子ID不存在')
     post = PostModel.query.get(post_id)
     if not post:
         return restful.params_error('未找到此帖子')
-    highlight = HighlightPostModel(post_id=post_id)
-    db.session.add(highlight)
+    if type == 'highlight':
+        if post.highlight:
+            return restful.params_error('请勿重复加精！')
+        highlight_post = HighlightPostModel(post_id=post_id)
+        db.session.add(highlight_post)
+        message = '帖子加精成功'
+    elif type == 'unhighlight':
+        highlight_post = post.highlight
+        db.session.delete(highlight_post)
+        message = '帖子取消加精成功'
+    else:
+        return restful.params_error('type参数错误')
+
     db.session.commit()
-    return restful.success('加精成功！')
+    return restful.success(message=message)
 
 
-#帖子取消加精
-@bp.route('/uhpost/',methods=['post'])
+#顶置处理
+@bp.route('/tpost/',methods=['POST'])
 @login_required
 @permission_required(Permission.MANAGE_POST)
-def uhpost():
+def tpost():
     post_id = request.form.get('post_id')
-    print('post_id:',post_id)
+    type = request.form.get('type')
     if not post_id:
         return restful.params_error('此帖子ID不存在')
     post = PostModel.query.get(post_id)
     if not post:
         return restful.params_error('未找到此帖子')
-    highlight = post.highlight[0]
-    print('delete highlight:',highlight)
-    db.session.delete(highlight)
+    if type == 'top':
+        if post.top:
+            return restful.params_error('请勿重复顶置')
+        top_post = TopPostModel(post_id=post_id)
+        db.session.add(top_post)
+        message = '帖子顶置成功'
+    elif type == 'untop':
+        top_post = post.top
+        db.session.delete(top_post)
+        message = '帖子取消顶置成功'
+    else:
+        return restful.params_error('type参数错误')
     db.session.commit()
-    print('取消加精成功！')
-    return restful.success('取消加精成功！')
+    return restful.success(message=message)
 
 
 #评论管理
@@ -408,22 +436,11 @@ def dbanners():
         return restful.params_error('未查询到此轮播图ID！')
 
 
-
-
-
-#权限
-@bp.route('/permission-manage/')
-@login_required
-def manage_permission():
-    users = User.query.order_by(User.join_time.desc()).all()
-    return render_template('cms/permission_manage.html', users=users)
-
-
 def group_relation(uid):
     '''
     当前用户组权限与对象用户组权限关系
     :param uid:
-    :return: data={'relation':x,'user':x,'current_user_group_permission_value':x,current_user_group_permission_value'}
+    :return: data={'relation':x,'user':x,'current_user_group_permission_value':x,user_group_permission_value'}
     '''
     user = User.query.get_or_404(uid)
     data = dict()
@@ -439,51 +456,6 @@ def group_relation(uid):
     return data
 
 
-class PermissionView1(MethodView):
-
-    decorators=[login_required]
-
-    def permission_rule(self,uid):
-        self.user = User.query.get(uid)
-        if not self.user:
-            return restful.params_error('未查询到此用户')
-        current_user_group_permissions = current_user.role.group.value
-        try:
-            self.user_group_permissions = self.user.role.group.value
-        except Exception as e:
-            return restful.params_error('未查询到该用户权限')
-        if sum(current_user_group_permissions) <= sum(self.user_group_permissions):
-            return restful.permission_error('无权查看或更改更高权限组用户的权限')
-        return True
-
-    def get(self,uid):
-
-        result = self.permission_rule(uid)
-        if result != True:
-            return result
-        permission_data = {}
-        permission_items = Permission.__dict__.items()
-        for item in permission_items:
-            if not item[0].startswith('__') and item[1] in self.user_group_permissions:
-                permission_data[item[0]] = {'checked': self.user.can(item[1]), 'value': item[1],
-                                            'desc': getattr(PermissionDesc, item[0], '暂无描述')}
-        per_items = permission_data.items()
-        per_items = sorted(per_items, key=lambda x: x[1]['value'])
-        return restful.success(data=per_items)
-
-    def post(self,uid):
-        result = self.permission_rule(uid)
-        if result != True:
-            return result
-        user_permission_value = int(request.form.get('per_value'))
-        user_group_permission_value = sum(self.user_group_permissions)
-        if user_permission_value > user_group_permission_value:
-            return restful.permission_error('该用户权限超过该组权限，不被允许')
-        self.user.set_permission(user_permission_value)
-        db.session.commit()
-        return restful.success('权限修改成功')
-
-
 class PermissionView(MethodView):
 
     decorators=[login_required]
@@ -493,14 +465,14 @@ class PermissionView(MethodView):
         user = result['user']
         if result['relation'] == 'LT':
             return restful.permission_error('权限不够！')
-        user_group_permissions = user.role.group.value
+        user_group_permissions = user.role.group.value#list,[1,2,4,8]
+        all_permission_items = [permission for permission in Permission.__dict__.items() if not permission[0].startswith('__')]#[('LOGIN',1),()]
         permission_data = dict()
-        items = Permission.__dict__.items()
-        for item in items:
-            if not item[0].startswith('__') and item[1] in user_group_permissions:
-                permission_data[item[0]] = {'checked': user.can(item[1]), 'value': item[1],
-                                            'desc': getattr(PermissionDesc, item[0], '暂无描述'),
-                                            'disabled':result['relation'] != 'LG' and user != current_user}
+        for permission_item in all_permission_items:
+            if permission_item[1] in user_group_permissions:
+                permission_data[permission_item[0]] = {'checked': user.can(permission_item[1]), 'value': permission_item[1],
+                                                    'desc': getattr(PermissionDesc, permission_item[0], '暂无描述'),
+                                                    'disabled': result['relation'] != 'LG' and user != current_user}
         permission_items = permission_data.items()
         permission_items = sorted(permission_items, key=lambda x: x[1]['value'])
         return restful.success(data=permission_items)
@@ -599,10 +571,19 @@ def disable_account():
     db.session.commit()
     return restful.success()
 
+#申请页面
+
+
 
 bp.add_url_rule('/changepassword',view_func=ChangePasswordView.as_view('changepassword'))
 bp.add_url_rule('/resetemail',view_func=ResetEmailView.as_view('resetemail'))
 bp.add_url_rule('/login/',endpoint='login',view_func=LoginView.as_view('login'))
 bp.add_url_rule('/permission/<uid>',endpoint='permission',view_func=PermissionView.as_view('permission'))
 
-
+@bp.route('/apply/',methods=['GET'])
+@login_required
+@permission_required(Permission.MANAGE_POST)
+def apply():
+    apply_tops = ApplyTop.query.all()
+    apply_highlights = HighlightPostModel.query.all()
+    return render_template('cms/apply.html')

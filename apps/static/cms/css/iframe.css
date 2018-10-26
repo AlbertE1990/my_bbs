@@ -4,10 +4,10 @@ body{
   padding:0;
   background: none;
 }
-html {
-  overflow-x:hidden;
-  overflow-y:hidden;
-}
+/*html {*/
+  /*overflow-x:hidden;*/
+  /*overflow-y:hidden;*/
+/*}*/
 .content{
   color:#FFF
 }

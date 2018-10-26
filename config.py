@@ -5,8 +5,8 @@ DEBUG = True
 SECRET_KEY = os.urandom(24)
 
 #db
-DB_USERNAME = 'root'
-DB_PASSWORD = 'root'
+DB_USERNAME = os.getenv('DB_USERNAME')
+DB_PASSWORD = os.getenv('DB_PASSWORD')
 DB_HOST     = 'localhost'
 DB_PORT     = '3306'
 DB_NAME     = 'mybbs'
@@ -15,8 +15,6 @@ DB_URI      = "mysql+pymysql://%s:%s@%s:%s/%s?charset=utf8"%\
 SQLALCHEMY_DATABASE_URI = DB_URI
 SQLALCHEMY_TRACK_MODIFICATIONS = False
 
-CMS_USER_ID = "you can not guess it"
-FRONT_USER_ID = "you can not guess it"
 
 #设置cookies过期时间,2小时
 # PERMANENT_SESSION_LIFETIME = timedelta(hours=2)
@@ -28,11 +26,11 @@ MAIL_SERVER = "smtp.qq.com"
 MAIL_PORT = '587'
 MAIL_USE_TLS = True
 #MAIL_USE_SSL = True
-MAIL_USERNAME = "112288349@qq.com"
-MAIL_PASSWORD = "kgqembbxywxfcbbb"
+MAIL_USERNAME = os.getenv('MAIL_USERNAME')
+MAIL_PASSWORD = os.getenv('MAIL_PASSWORD')
 
 FLASKY_MAIL_SUBJECT_PREFIX = '[CMS]'
-FLASKY_MAIL_SENDER = 'CMS Admin <112288349@qq.com>'
+FLASKY_MAIL_SENDER = 'CMS Admin <CMS@qq.com>'
 FLASKY_ADMIN = 'CMS后台管理系统_ADMIN'
 
 #前端

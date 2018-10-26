@@ -8,6 +8,15 @@
 {% block content %}
   <div class="content container" >
     <div class="widget-header"> <i class="icon-table"></i>
+      <div  class="select" style="float: left">
+        <label>任务种类
+          <select id="apply-type" size="1" name="apply-type" aria-controls="example">
+            <option value='all' >所有</option>
+            <option value='top' >顶置</option>
+            <option value='highlight' >加精</option>
+          </select>
+        </label>
+      </div>
       <div id="post-board" class="select" style="float: left">
         <label>板块
           <select id="board" size="1" name="board" aria-controls="example">

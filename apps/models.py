@@ -29,26 +29,22 @@ class Permission():
     MANAGE_POST                 = 0b100000
     # 7.管理评论
     MANAGE_COMMENTE             = 0b1000000
-    # 8.管理前台用户账号
-    MANAGE_FRONTUSER_ACCOUNT    = 0b10000000
-    # 9.管理前台用户权限
-    MANAGE_FRONTUSER_PERMISSION = 0b100000000
+    # 8.管理用户账号
+    MANAGE_ACCOUNT              = 0b10000000
+    # 9.管理用户权限
+    MANAGE_PERMISSION           = 0b100000000
     # 10.管理板块
     BOARDER                     = 0b1000000000
     #11.管理轮播图
     BANNER                      = 0b10000000000
-    #12.管理后台用户账户
-    MANAGE_OPERATOR_ACCOUNT     = 0b100000000000
-    #13.管理后台用户权限
-    MANAGE_OPERATOR_PERMISSION  = 0b1000000000000
-    #14.管理管理员账户
-    MANAGE_ADMINSTRATOR_ACCOUNT = 0b10000000000000
-    #15.管理管理员权限
-    MANAGE_ADMINSTRATOR_PERMISSION = 0b100000000000000
-    #16.超级管理员
-    SU                          = 0b1000000000000000
+    #12.创建账户
+    CREATE_ACCOUNT              = 0b100000000000
+    #13组管理
+    MANAGE_GROUP                = 0b1000000000000
+    #14.超级管理员
+    SU                          = 0b10000000000000
     # 所有权限
-    ALL_PERMISSION              = 0b1111111111111111
+    ALL_PERMISSION              = 0b11111111111111
 
 
 class PermissionDesc():
@@ -68,22 +64,18 @@ class PermissionDesc():
     # 7.管理评论
     MANAGE_COMMENTE             = '管理评论'
     # 8.管理前台用户账号
-    MANAGE_FRONTUSER_ACCOUNT    = '管理前台用户账号'
+    MANAGE_ACCOUNT              = '管理用户账号'
     # 9.管理前台用户权限
-    MANAGE_FRONTUSER_PERMISSION = '管理前台用户权限'
+    MANAGE_PERMISSION           = '管理用户权限'
     # 10.管理板块
     BOARDER                     = '管理板块'
     #11.管理轮播图
     BANNER                      = '管理轮播图'
-    #12.管理后台用户账户
-    MANAGE_OPERATOR_ACCOUNT     = '管理CMS用户账户'
-    #13.管理后台用户权限
-    MANAGE_OPERATOR_PERMISSION  = '管理CMS用户权限'
-    #14.管理管理员账户
-    MANAGE_ADMINSTRATOR_ACCOUNT = '管理管理员账户'
-    #15.管理管理员权限
-    MANAGE_ADMINSTRATOR_PERMISSION = '管理管理员权限'
-    #16.超级管理员
+    #
+    CREATE_ACCOUNT              = '新开账户'
+    #13.用户组管理
+    MANAGE_GROUP                = '用户组管理'
+    #14.超级管理员
     SU                          = '超级管理员'
     # 所有权限
     ALL_PERMISSION              = '所有权限'
@@ -94,11 +86,9 @@ class Group(enum.Enum):
     FrontUser     = [Permission.LOGIN, Permission.VIEW_POST, Permission.PUBLISH_POST,
                      Permission.PUBLISH_COMMENT]
     Operator      = FrontUser + [Permission.LOGIN_CMS,Permission.MANAGE_POST,Permission.MANAGE_COMMENTE,
-                                      Permission.MANAGE_FRONTUSER_ACCOUNT,Permission.MANAGE_FRONTUSER_PERMISSION]
-    Administrator = Operator + [Permission.BANNER,Permission.BOARDER,Permission.MANAGE_OPERATOR_ACCOUNT,
-                                     Permission.MANAGE_ADMINSTRATOR_PERMISSION]
-    Super = Administrator+[Permission.MANAGE_ADMINSTRATOR_ACCOUNT,Permission.MANAGE_ADMINSTRATOR_PERMISSION,Permission.SU]
-
+                                      Permission.MANAGE_ACCOUNT,Permission.MANAGE_PERMISSION]
+    Administrator = Operator + [Permission.BANNER,Permission.CREATE_ACCOUNT]
+    Super = Administrator+[Permission.MANAGE_GROUP,Permission.SU]
 
 class GenderEnum(enum.Enum):
     MALE = 1
@@ -387,3 +377,23 @@ class TopPostModel(db.Model):
     create_time = db.Column(db.DateTime, default=datetime.now)
 
     post = db.relationship('PostModel',backref=backref('top',uselist=False) )
+
+
+#加精帖子申请
+class ApplyHighlight(db.Model):
+    __tablename__ = 'apply_highlight'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    post_id = db.Column(db.Integer, db.ForeignKey('post.id'))
+    create_time = db.Column(db.DateTime, default=datetime.now)
+
+    post = db.relationship('PostModel', backref=backref('apply_highlight', uselist=False))
+
+
+#顶置帖子申请
+class ApplyTop(db.Model):
+    __tablename__ = 'apply_top'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    post_id = db.Column(db.Integer, db.ForeignKey('post.id'))
+    create_time = db.Column(db.DateTime, default=datetime.now)
+
+    post = db.relationship('PostModel', backref=backref('apply_top', uselist=False))

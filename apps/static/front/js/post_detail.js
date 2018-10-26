@@ -60,4 +60,45 @@ $(function(){
     })
   });
 
+  //申请功能
+    $('.apply').click(function (e) {
+        var type = $(this).attr('data-type');
+        myajax.post({
+            'url':'/apply/',
+            'data':{
+                'type':type,
+                'pid':post_id
+            },
+            'success':function (data) {
+                if (data.code == 200){
+                    xtalert.alertSuccessToast(data.message)
+                }else{
+                    xtalert.alertErrorToast(data.message)
+                }
+            }
+        })
+    });
+
+    //顶置处理
+    $('.top-post').click(function (e) {
+        console.log('顶置处理');
+        var type = $(this).attr('data-type');
+        var url = $(this).attr('data-url');
+        console.log(type);
+        myajax.post({
+            'url':url,
+            'data':{
+                'type':type,
+                'post_id':post_id
+            },
+            'success':function (data) {
+                if(data.code == 200){
+                    xtalert.alertSuccessToast(data.message)
+                }else{
+                    xtalert.alertErrorToast(data.message)
+                }
+            }
+        })
+    })
+
 })

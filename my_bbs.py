@@ -2,7 +2,7 @@ import click
 from apps import create_app
 from flask_migrate import Migrate,MigrateCommand
 from exts import db
-from apps.models import PostModel,CommentModel,User,Role,Permission,Group
+from apps.models import PostModel,CommentModel,User,Role,Permission,Group,ApplyHighlight,ApplyTop
 import fake_
 
 app = create_app()
@@ -18,8 +18,10 @@ def make_shell_context():
                    User = User,
                    Role = Role,
                    Permission = Permission,
-                   Group = Group
-    )
+                   Group = Group,
+                   ApplyHighlight = ApplyHighlight,
+                   ApplyTop = ApplyTop
+                   )
     return context
 
 
@@ -58,3 +60,11 @@ def test_permission_user():
 @app.cli.command()
 def set_permission():
     fake_.set_permission()
+
+@app.cli.command()
+def reset_permission():
+    for u in User.query.all():
+        group = u.role.group
+        u.role.permissions = sum(group.value)
+        db.session.add(u)
+    db.session.commit()
