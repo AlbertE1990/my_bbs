@@ -341,6 +341,16 @@ class PostModel(db.Model):
     author = db.relationship('User',backref='posts')
     board = db.relationship('BoardModel',backref='posts')
 
+    def is_applied(self,type):
+        applys = self.apply
+        for apply in applys:
+            if apply.type == type:
+                return True
+        return False
+
+    def apply(self,type):
+        return Apply.query.filter(Apply.post_id == self.id and Apply.type == type)
+
     __mapper_args__ = {'order_by': create_time.desc()}
 
 #评论
@@ -397,3 +407,26 @@ class ApplyTop(db.Model):
     create_time = db.Column(db.DateTime, default=datetime.now)
 
     post = db.relationship('PostModel', backref=backref('apply_top', uselist=False))
+
+
+class Apply(db.Model):
+
+    def __init__(self, *args, **kwargs):
+        if 'desc' in kwargs:
+            kwargs.pop('desc')
+        if 'type' in kwargs:
+            self.desc = self.desc_dict.get(kwargs['type'])
+        super(Apply, self).__init__(*args, **kwargs)
+
+    desc_dict = {
+        'highlight':'加精',
+        'top':'顶置'
+    }
+    __tablename__ = 'apply'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    post_id = db.Column(db.Integer, db.ForeignKey('post.id'))
+    type = db.Column(db.String(50))
+    desc = db.Column(db.String(50))
+    create_time = db.Column(db.DateTime, default=datetime.now)
+
+    post = db.relationship('PostModel', backref=backref('apply'))

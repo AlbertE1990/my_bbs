@@ -68,7 +68,7 @@
                 <li data-src={{ url_for('cms.posts') }}><a href="javascript:void(0)"> <i class="icon-angle-right"></i> 帖子管理</a></li>
               {% endif  %}
               {% if current_user.can(Permission.MANAGE_POST) %}
-                <li data-src={{ url_for('cms.posts') }}><a href="javascript:void(0)"> <i class="icon-angle-right"></i> 查看申请</a></li>
+                <li data-src={{ url_for('cms.apply') }}><a href="javascript:void(0)"> <i class="icon-angle-right"></i> 查看申请</a></li>
               {% endif  %}
               {% if current_user.can(Permission.MANAGE_COMMENTE) %}
                 <li data-src={{ url_for('cms.comments') }}><a href="javascript:void(0)"> <i class="icon-angle-right"></i> 评论管理 </a></li>

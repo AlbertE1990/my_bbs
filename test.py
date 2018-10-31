@@ -1,5 +1,6 @@
 from flask_sqlalchemy import SQLAlchemy
 import enum
+from datetime import datetime
 
 db = SQLAlchemy()
 
@@ -67,3 +68,38 @@ class Role(db.Model):
             self.permissions = sum(getattr(Group,self.group,0).value)
         else:
             self.permissions = min(sum(getattr(Group,self.group).value),self.permissions)
+
+class Apply(db.Model):
+
+    def __init__(self,*args,**kwargs):
+        if 'desc' in kwargs:
+            kwargs.pop('desc')
+        if 'type' in kwargs:
+            self.desc = self.desc_dict.get(kwargs['type'])
+
+        super(Apply,self).__init__(*args,**kwargs)
+
+    __tablename__ = 'apply'
+    desc_dict = {
+        'highlight':'加精',
+        'top':'顶置'
+    }
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    post_id = db.Column(db.Integer, db.ForeignKey('post.id'))
+    type = db.Column(db.String(50))
+    desc = db.Column(db.String(50))
+    create_time = db.Column(db.DateTime, default=datetime.now)
+
+if __name__ == '__main__':
+    class A():
+
+        def foo(self,x):
+            print('hello i am foo:',x)
+
+
+        @staticmethod
+        def show():
+            print('hello i am A')
+    a = A()
+    a.foo('jack')
+    A.foo('y','x')

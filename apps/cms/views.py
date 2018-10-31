@@ -11,7 +11,7 @@ from flask_login import login_user,logout_user,current_user
 import os
 from apps.models import BoardModel,PostModel,HighlightPostModel,BannerModel
 from flask_paginate import get_page_parameter,Pagination
-from ..models import User,Permission,Role,Group,TopPostModel,PermissionDesc,ApplyTop,ApplyHighlight
+from ..models import User,Permission,Role,Group,TopPostModel,PermissionDesc,Apply
 from .import bp
 from ..decorators import login_required,permission_required
 
@@ -571,19 +571,111 @@ def disable_account():
     db.session.commit()
     return restful.success()
 
-#申请页面
-
-
 
 bp.add_url_rule('/changepassword',view_func=ChangePasswordView.as_view('changepassword'))
 bp.add_url_rule('/resetemail',view_func=ResetEmailView.as_view('resetemail'))
 bp.add_url_rule('/login/',endpoint='login',view_func=LoginView.as_view('login'))
 bp.add_url_rule('/permission/<uid>',endpoint='permission',view_func=PermissionView.as_view('permission'))
 
-@bp.route('/apply/',methods=['GET'])
-@login_required
-@permission_required(Permission.MANAGE_POST)
-def apply():
-    apply_tops = ApplyTop.query.all()
-    apply_highlights = HighlightPostModel.query.all()
-    return render_template('cms/apply.html')
+
+#申请页面
+class ApplyView(MethodView):
+
+    decorators =[login_required,permission_required(Permission.MANAGE_POST)]
+
+    def get(self):
+        apply_type = request.args.get('type',default='all')
+        board_id = request.args.get('bd',type=int,default=0)
+        page = request.args.get(get_page_parameter(), type=int, default=1)
+        per_page = request.args.get('pg', type=int, default=current_app.config['PER_PAGE'])
+        start = (page - 1) * per_page
+        end = start + per_page
+        if not board_id:
+            query_obj = db.session.query(Apply)
+        else:
+            query_obj = db.session.query(Apply).join(PostModel).filter(PostModel.board_id==board_id)
+
+        if apply_type == 'all':
+            pass
+        else:
+            query_obj = query_obj.filter(Apply.type == apply_type)
+        query_obj = query_obj.order_by(Apply.create_time.desc())
+        applys = query_obj.slice(start, end).all()
+        total = query_obj.count()
+        pagination = Pagination(page=page,per_page=per_page,total=total, bs_version=3)
+        context = {
+            'applys': applys,
+            'boards':BoardModel.query.all(),
+            'pagination': pagination,
+            'apply_types':Apply.desc_dict
+        }
+        return render_template('cms/apply.html',**context)
+
+    def post(self):
+        apply_id = request.form.get('apply_id')
+        apply = Apply.query.get_or_404(apply_id)
+        feedback = request.form.get('feedback')
+        if feedback == 'accept':
+            PostFuncView.post(post_id=apply.post.id,type=apply.type)
+        elif feedback == 'reject':
+            db.session.delete(apply)
+        else:
+            return restful.params_error('不支持此方法')
+
+        db.session.commit()
+        return restful.success('操作成功')
+
+bp.add_url_rule('/apply/',endpoint='apply',view_func=ApplyView.as_view('apply'))
+
+
+class PostFuncView(MethodView):
+
+    @staticmethod
+    def post(post_id,type):
+        if not post_id:
+            post_id = request.form.get('post_id')
+        if not type:
+            type = request.form.get('type')
+        if not post_id:
+            return restful.params_error('此帖子ID不存在')
+        post = PostModel.query.get(post_id)
+        if not post:
+            return restful.params_error('未找到此帖子')
+        try:
+            func = getattr(PostFuncView,type)
+        except Exception as e:
+            return restful.params_error('不支持此方法：%s'%type)
+        func(post)
+        apply = Apply.query.filter(Apply.post_id==post_id and Apply.type==type).first()
+        db.session.delete(apply)
+        db.session.commit()
+        return restful.success(message='操作成功')
+
+    @staticmethod
+    def highlight(post):
+        if post.highlight:
+            return restful.params_error('请勿重复加精！')
+        highlight_post = HighlightPostModel(post_id=post.id)
+        db.session.add(highlight_post)
+
+    @staticmethod
+    def unhighlight(post):
+        highlight_post = post.highlight
+        db.session.delete(highlight_post)
+
+    @staticmethod
+    def top(post):
+        if post.top:
+            return restful.params_error('请勿重复顶置')
+        top_post = TopPostModel(post_id=post.id)
+        db.session.add(top_post)
+
+    @staticmethod
+    def untop(post):
+        top_post = post.top
+        db.session.delete(top_post)
+
+bp.add_url_rule('/postfunc/',endpoint='postfunc',view_func=PostFuncView.as_view('postfunc'))
+
+if __name__ == '__main__':
+    pass

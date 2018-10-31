@@ -7,7 +7,7 @@ from ..models import User,Permission
 from exts import db,mail
 from flask_login import current_user,login_user
 from config import PER_PAGE
-from ..models import BannerModel,BoardModel,PostModel,CommentModel,HighlightPostModel,TopPostModel,ApplyTop,ApplyHighlight
+from ..models import BannerModel,BoardModel,PostModel,CommentModel,HighlightPostModel,Apply,TopPostModel,ApplyTop,ApplyHighlight
 from io import BytesIO
 from flask_paginate import Pagination,get_page_parameter
 from apps.email import send_email
@@ -511,57 +511,19 @@ def unhpost(pid):
     return redirect(request.referrer)
 
 
-#申请加精
-@bp.route('/apply-highlight/',methods=['POST'])
-@login_required
-def apply_highlight():
+#申请
+@bp.route('/apply/',methods=['Post'])
+def apply():
     pid = request.form.get('pid')
-
-
-class ApplyView(views.MethodView):
-
-    def post(self):
-        pid = request.form.get('pid')
-        type = request.form.get('type')
-        check_res = self.check(pid,type)
-        if not check_res['flag']:
-            return restful.params_error(message=check_res['message'])
-        func = getattr(self,type)
-        try:
-            func(pid)
-        except Exception as e:
-            return restful.params_error(str(e))
-        try:
-            db.session.commit()
-            print('申请成功')
-            return restful.success('申请成功')
-        except Exception as e:
-            print(e)
-            db.session.rollback()
-            return restful.params_error('申请失败')
-
-    def check(self,pid,type):
-        if pid is None or type is None:
-            return dict(flag=0,message='参数不能为空')
-        if not getattr(self,type):
-            return dict(flag=0, message='不支持此方法')
-        return dict(flag=1)
-
-    def highlight(self,pid):
-        apply_highlight_post = ApplyHighlight.query.filter_by(post_id=pid).first()
-        if apply_highlight_post:
-            raise Exception('请勿重复申请!')
-        apply_highlight_post = ApplyHighlight(post_id=pid)
-        db.session.add(apply_highlight_post)
-
-    def top(self,pid):
-        apply_top_post = ApplyTop.query.filter_by(post_id=pid).first()
-        if apply_top_post:
-            raise Exception('请勿重复申请!')
-        apply_top_post = ApplyTop(post_id=pid)
-        db.session.add(apply_top_post)
-
-bp.add_url_rule('/apply/',view_func=ApplyView.as_view('apply'))
-
+    type = request.form.get('type')
+    if pid is None or type is None:
+        return restful.params_error("参数不能为空")
+    post = PostModel.query.get_or_404(pid)
+    if post.is_applied(type):
+        return restful.params_error("请勿重复申请:%s"%type)
+    apply = Apply(post_id=pid,type=type)
+    db.session.add(apply)
+    db.session.commit()
+    return restful.success("申请成功")
 
 

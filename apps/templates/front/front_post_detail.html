@@ -58,14 +58,14 @@
                   {% if post.author == current_user %}
                     <span><a class="btn btn-warning btn-sm" href={{ url_for('.upost',post_id=post.id) }}>编辑</a></span>
                     {% if not post.highlight %}
-                      {% if not post.apply_highlight %}
+                      {% if not post.is_applied('highlight') %}
                         <span><a class="btn btn-warning btn-sm apply" href="javascript:void(0)" data-type="highlight">申请加精</a></span>
                       {% else %}
                         <span><a class="btn btn-warning btn-sm apply disabled" href="javascript:void(0)" data-type="highlight">申请加精</a></span>
                       {% endif %}
                     {% endif %}
                     {% if not post.top %}
-                      {% if not post.apply_top %}
+                      {% if not post.is_applied('top') %}
                         <span><a class="btn btn-warning btn-sm apply" href="javascript:void(0)" data-type="top">申请顶置</a></span>
                       {% else %}
                         <span><a class="btn btn-warning btn-sm apply disabled" href="javascript:void(0)" data-type="top">申请顶置</a></span>

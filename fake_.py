@@ -1,7 +1,7 @@
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import func
 from faker import Faker
-from apps.models import PostModel,CommentModel,BoardModel,User,GenderEnum,Role,Permission
+from apps.models import Apply,PostModel,CommentModel,BoardModel,User,GenderEnum,Role,Permission
 from random import choice,randint
 import json
 from exts import db
@@ -176,5 +176,14 @@ def set_permission():
     except Exception:
         db.session.rollback()
         print('设置失败')
+
+def fake_apply(p):
+    types = ['top','highlight']
+    for t in types:
+        if not p.is_applied(t):
+            a = Apply(type=t,create_time=fake.date_this_year(before_today=True, after_today=False))
+            p.apply.append(a)
+            db.session.add(a)
+
 
 

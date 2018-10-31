@@ -3,7 +3,53 @@
 {% endblock %}
 {% block scripts %}
   {{ super() }}
-  <script src={{ static('cms/js/posts.js') }}></script>
+  <script >
+  $(function () {
+      function init_select(){
+          var current_url = document.URL;
+          var current_board = current_url.match(/bd=(\d+)/);
+          var current_per_page = current_url.match(/pg=(\d+)/);
+          var current_type = current_url.match(/type=(\w+)/);
+          current_board = current_board?current_board[1]:0;
+          current_per_page = current_per_page?current_per_page[1]:10;
+          current_type = current_type?current_type[1]:'all';
+          $('#apply-type option[value={0}]'.format(current_type)).prop("selected", true);
+          $('#per-page option[value={0}]'.format(current_per_page)).prop("selected", true);
+          $('#board option[value={0}]'.format(current_board)).prop("selected", true);
+      }
+      init_select();
+      //选择框选项改变事件
+      $('select').change(function () {
+          var per_page = $('#per-page').val();
+          var board_id = $('#board').val();
+          var apply_type = $('#apply-type').val();
+          var base_url = "/apply/?pg={per_page}&type={apply_type}&bd={board_id}";
+          var next= base_url.format({per_page:per_page,apply_type:apply_type,board_id:board_id});
+          location.href=next;
+
+      });
+      //功能按钮,处理申请
+    $('.func-btn').click(function () {
+        var apply_id = $(this).parent().parent().attr('apply-id');
+        var feedback = $(this).attr('feedback');
+        myajax.post({
+            'url':'/apply/',
+            'data':{
+                'apply_id':apply_id,
+                'feedback':feedback
+
+            },
+            'success':function (data) {
+                if(data.code == 200){
+                    location.reload()
+                }
+            }
+        })
+
+    })
+  })
+
+  </script>
 {% endblock %}
 {% block content %}
   <div class="content container" >
@@ -12,8 +58,9 @@
         <label>任务种类
           <select id="apply-type" size="1" name="apply-type" aria-controls="example">
             <option value='all' >所有</option>
-            <option value='top' >顶置</option>
-            <option value='highlight' >加精</option>
+            {% for at in apply_types %}
+            <option value={{ at }} >{{ apply_types.get(at) }}</option>
+            {% endfor %}
           </select>
         </label>
       </div>
@@ -42,32 +89,23 @@
       <thead>
       <tr>
         <th>标题</th>
-        <th>发布时间</th>
+        <th>申请时间</th>
         <th>板块</th>
-        <th>作者</th>
+        <th>申请类型</th>
         <th>操作</th>
       </tr>
       </thead>
       <tbody>
-      {% for post in posts %}
-        <tr data-id="{{ post.id }}"   >
-          <td><a href={{ url_for('front.post_detail',post_id=post.id) }} target='_blank'>{{ post.title }}</a></td>
-          <td>{{ post.create_time }}</td>
-          <td>{{ post.board.name }}</td>
-          <td>{{ post.author.username }}</td>
+      {% for apply in applys %}
+        <tr apply-id="{{ apply.id }}"  apply-type="{{ apply.type }}" >
+          <td><a href={{ url_for('front.post_detail',post_id=apply.post.id) }} target='_blank'>{{ apply.post.title }}</a></td>
+          <td>{{ apply.create_time }}</td>
+          <td>{{ apply.post.board.name }}</td>
+          <td>{{ apply.desc}}</td>
           <td>
-            {% if post.highlight %}
-              <button class="btn btn-default btn-xs highlight-btn" data-type="unhighlight">取消加精</button>
-            {% else %}
-              <button class="btn btn-default btn-xs highlight-btn" data-type="highlight">加精</button>
-            {% endif %}
-            {% if post.top %}
-              <button class="btn btn-default btn-xs top-post-btn" data-type="untop">取消顶置</button>
-            {% else %}
-              <button class="btn btn-default btn-xs top-post-btn" data-type="top">顶置</button>
-            {% endif %}
-
-            <button class="btn btn-danger btn-xs delete-btn">删除</button>
+            <button class="btn btn-default btn-xs "><a href={{ url_for('front.post_detail',post_id=apply.post.id) }} target='_blank'>查看帖子</a></button>
+            <button class="btn btn-success btn-xs func-btn" feedback="accept">同意</button>
+            <button class="btn btn-danger btn-xs func-btn" feedback="reject">驳回</button>
           </td>
         </tr>
       {% endfor %}
